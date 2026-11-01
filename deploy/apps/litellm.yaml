@@ -15,6 +15,8 @@ spec:
       releaseName: litellm
       valuesObject:
         replicaCount: 1
+        strategy:
+           type: Recreate
         image:
           repository: ghcr.io/berriai/litellm
           tag: v1.106.6
