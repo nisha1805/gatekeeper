@@ -33,3 +33,33 @@ resource "kubernetes_namespace" "app" {
     name = each.key
   }
 }
+
+provider "helm" {
+  kubernetes {
+    host                   = kind_cluster.gatekeeper.endpoint
+    client_certificate     = kind_cluster.gatekeeper.client_certificate
+    client_key             = kind_cluster.gatekeeper.client_key
+    cluster_ca_certificate = kind_cluster.gatekeeper.cluster_ca_certificate
+  }
+}
+
+resource "helm_release" "argocd" {
+  name             = "argocd"
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  version          = "10.11.6"
+  namespace        = "argocd"
+  create_namespace = true
+  wait             = true
+  timeout          = 600
+
+  # Keep it light for a laptop: we don't need single sign-on or notifications.
+  set {
+    name  = "dex.enabled"
+    value = "false"
+  }
+  set {
+    name  = "notifications.enabled"
+    value = "false"
+  }
+}
