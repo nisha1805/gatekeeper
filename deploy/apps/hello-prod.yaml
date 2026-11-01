@@ -1,17 +1,23 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: sample-app
+  name: hello-prod
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
     repoURL: https://github.com/nisha1805/gatekeeper.git
     targetRevision: main
-    path: deploy/sample-app
+    path: deploy/charts/hello
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-prod.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: sample
+    namespace: hello-prod
   syncPolicy:
     automated:
       prune: true

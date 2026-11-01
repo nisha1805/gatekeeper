@@ -1,0 +1,6 @@
+apiVersion: v2
+name: hello
+description: Sample app used to prove the GitOps loop
+type: application
+version: 0.1.0
+appVersion: "1.27"
