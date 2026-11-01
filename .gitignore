@@ -218,3 +218,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Gatekeeper: never commit secrets or local state
+.env
+*.tfstate
+*.tfstate.*
+.terraform/
+*.kubeconfig
