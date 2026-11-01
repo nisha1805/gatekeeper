@@ -1,0 +1,63 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: litellm
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: ghcr.io/berriai
+    chart: litellm-helm
+    targetRevision: 1.106.6
+    helm:
+      releaseName: litellm
+      valuesObject:
+        replicaCount: 1
+        image:
+          repository: ghcr.io/berriai/litellm
+          tag: v1.106.6
+          pullPolicy: IfNotPresent
+        masterkeySecretName: litellm-secrets
+        masterkeySecretKey: LITELLM_MASTER_KEY
+        environmentSecrets:
+          - litellm-secrets
+        db:
+          useExisting: true
+          deployStandalone: false
+          endpoint: postgres:5432
+          database: litellm
+          secret:
+            name: litellm-secrets
+            usernameKey: DB_USERNAME
+            passwordKey: DB_PASSWORD
+        redis:
+          enabled: false
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 2Gi
+        proxy_config:
+          model_list:
+            - model_name: claude-haiku
+              litellm_params:
+                model: anthropic/claude-haiku-5-5
+                api_key: os.environ/ANTHROPIC_API_KEY
+          general_settings:
+            master_key: os.environ/PROXY_MASTER_KEY
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gateway
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m
