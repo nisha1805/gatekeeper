@@ -63,3 +63,10 @@ resource "helm_release" "argocd" {
     value = "false"
   }
 }
+
+resource "helm_release" "bootstrap" {
+  name       = "bootstrap"
+  chart      = "${path.module}/../deploy/bootstrap"
+  namespace  = "argocd"
+  depends_on = [helm_release.argocd]
+}
