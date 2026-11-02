@@ -21,6 +21,11 @@ spec:
           repository: ghcr.io/berriai/litellm
           tag: v1.106.6
           pullPolicy: IfNotPresent
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 65534
+          runAsGroup: 65534
+          fsGroup: 65534
         masterkeySecretName: litellm-secrets
         masterkeySecretKey: LITELLM_MASTER_KEY
         environmentSecrets:
