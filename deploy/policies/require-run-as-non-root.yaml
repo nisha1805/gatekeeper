@@ -13,6 +13,7 @@ spec:
           values:
             - hello-dev
             - hello-prod
+            - gateway
     resourceRules:
       - apiGroups: [""]
         apiVersions: ["v1"]
@@ -21,7 +22,9 @@ spec:
   validations:
     - expression: >-
         object.spec.containers.all(c,
-        has(c.securityContext) &&
-        has(c.securityContext.runAsNonRoot) &&
-        c.securityContext.runAsNonRoot == true)
-      message: "Containers must set securityContext.runAsNonRoot to true."
+        (has(c.securityContext) && has(c.securityContext.runAsNonRoot))
+        ? c.securityContext.runAsNonRoot
+        : (has(object.spec.securityContext) &&
+        has(object.spec.securityContext.runAsNonRoot) &&
+        object.spec.securityContext.runAsNonRoot))
+      message: "Containers must run as non-root: set runAsNonRoot to true on the container or the pod."
