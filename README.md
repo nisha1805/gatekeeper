@@ -1,4 +1,5 @@
 # Gatekeeper
+[![CI](https://github.com/nisha1805/gatekeeper/actions/workflows/ci.yml/badge.svg)](https://github.com/nisha1805/gatekeeper/actions/workflows/ci.yml)
 
 An AI gateway with EU AI Act compliance workflows, built as a hands-on portfolio project.
 
@@ -9,6 +10,9 @@ An AI gateway with EU AI Act compliance workflows, built as a hands-on portfolio
 When several teams add AI features, three things get out of control: cost (nobody knows what an answer costs), quality (prompts and models change without measurement) and compliance (EU AI Act duties need classification and evidence). See [the problem brief](docs/product/problem-brief.md).
 
 ## What works today
+**Pipeline**
+- GitHub Actions runs on every push: a gitleaks scan of the full history, Terraform format and validate, and Helm lint for both charts. No deployment and no secrets are involved.
+- Third-party actions are avoided. The only one used is GitHub's own checkout, pinned to an exact commit, and tools are installed at pinned versions. Trivy is not added yet: I want to install a pinned, checksum-verified release rather than trust a version tag.
 
 **Platform (Phase 1)**
 - One `terraform apply` builds a local Kubernetes cluster (kind), creates namespaces and installs Argo CD.
