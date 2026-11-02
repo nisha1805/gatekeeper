@@ -25,5 +25,13 @@
 ## Known limits
 - Fallback is a larger model, about 20 times the cost per request in the price list. A long outage would spend budget faster.
 - Budget enforcement overshoots slightly.
-- The gateway and Postgres run as root in the cluster, and the root-container policy does not cover the gateway namespace yet.
+- The root-container policy covers three namespaces only (hello-dev, hello-prod, gateway), not the whole cluster. It checks regular containers, not init containers.
 - No guardrails and no network policy yet. Local single-node cluster only.
+
+## Hardening (added after the first notes)
+- Postgres runs as user 70 with all capabilities dropped. The gateway runs as user 65534 on the official non-root image (litellm-non_root, same version as before).
+- The Kyverno rule now covers the gateway namespace and accepts the non-root setting at pod level or container level.
+- Tested: a root pod was refused in gateway and hello-dev, the hardened Postgres pod was admitted after deletion, and the smoke test passed 6 of 6 both before and after hardening.
+
+## Problem I hit while hardening
+- My first gateway commit was described as switching to the non-root image, but the repository line had not changed. The pod still ran as nobody because the pod-level settings were enough, and the smoke test passed either way. I found it by reading the running deployment's image and user, and fixed it with a second commit.

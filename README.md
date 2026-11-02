@@ -14,7 +14,7 @@ When several teams add AI features, three things get out of control: cost (nobod
 - One `terraform apply` builds a local Kubernetes cluster (kind), creates namespaces and installs Argo CD.
 - Argo CD watches this repo (app of apps). A change pushed to `deploy/` reaches the cluster without running `kubectl`.
 - A sample app is packaged as a Helm chart and deployed twice: dev (1 replica) and prod (2 replicas).
-- A Kyverno policy rejects containers that do not set `runAsNonRoot` in the sample namespaces.
+- A Kyverno policy reje- A Kyverno policy rejects containers that do not set `runAsNonRoot`, in the sample namespaces and in the gateway namespace.
 - I tested a full destroy and rebuild: all applications and the policy came back from Git on their own.
 
 **Gateway (Phase 2, in progress)**
@@ -24,6 +24,7 @@ When several teams add AI features, three things get out of control: cost (nobod
 - Two teams each have their own virtual key and budget. In a test, a team with a tiny budget was blocked after a few requests while the other team kept working. Enforcement overshot the limit by about 18 percent, so budgets are a guard rail, not an exact limit.
 - `scripts/smoke-test.sh` checks the whole gateway in one command (6 checks, all passing on a fresh rebuild).
 - API keys never enter Git. They live in git-ignored local files, and a script loads them into the cluster.
+- The gateway (official non-root LiteLLM image) and Postgres run as non-root users, and the policy above refuses a root container in the gateway namespace. I checked this against the running cluster, not only against Git.
 
 ## What is not built yet
 
