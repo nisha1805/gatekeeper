@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@PASTE_SHA_HERE # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install gitleaks 8.30.1 (checksum verified)
+        run: |
+          set -eu
+          V=8.30.1
+          BASE="https://github.com/gitleaks/gitleaks/releases/download/v${V}"
+          curl -sSfL -o gitleaks.tgz "${BASE}/gitleaks_${V}_linux_x64.tar.gz"
+          curl -sSfL -o checksums.txt "${BASE}/gitleaks_${V}_checksums.txt"
+          grep "gitleaks_${V}_linux_x64.tar.gz" checksums.txt | awk '{print $1"  gitleaks.tgz"}' | sha256sum --check
+          tar -xzf gitleaks.tgz gitleaks
+      - name: Scan the whole history for secrets
+        run: ./gitleaks git --redact -v
+
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@PASTE_SHA_HERE # v6
+        with:
+          persist-credentials: false
+      - name: Format check
+        run: docker run --rm -v "$PWD:/work" -w /work/infra hashicorp/terraform:1.17.1 fmt -check -recursive
+      - name: Validate
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work/infra hashicorp/terraform:1.17.1 init -backend=false
+          docker run --rm -v "$PWD:/work" -w /work/infra hashicorp/terraform:1.17.1 validate
+
+  helm-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@PASTE_SHA_HERE # v6
+        with:
+          persist-credentials: false
+      - run: helm version
+      - run: helm lint deploy/charts/hello
+      - run: helm lint deploy/bootstrap
