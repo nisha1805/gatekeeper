@@ -15,6 +15,9 @@ spec:
       releaseName: litellm
       valuesObject:
         replicaCount: 1
+        metricsServer:
+          enabled: true
+          port: 4001
         strategy:
            type: Recreate
         image:
