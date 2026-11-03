@@ -17,8 +17,8 @@ data:
           "id": 1, "type": "stat", "title": "Chat success rate (SLO 99%)",
           "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "targets": [ { "refId": "A", "expr": "gatekeeper:chat_success_ratio:rate5m" } ],
-          "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1,
+          "targets": [ { "refId": "A", "expr": "gatekeeper:chat_success_ratio:rate5m >= 0" } ],
+          "fieldConfig": { "defaults": { "noValue": "no traffic", "unit": "percentunit", "min": 0, "max": 1,
             "thresholds": { "mode": "absolute", "steps": [
               { "color": "red", "value": null },
               { "color": "orange", "value": 0.95 },
@@ -26,7 +26,7 @@ data:
           "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
         },
         {
-          "id": 2, "type": "stat", "title": "Gateway metrics target",
+          "id": 2, "type": "stat", "title": "Gateway up",
           "gridPos": { "h": 6, "w": 4, "x": 8, "y": 0 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [ { "refId": "A", "expr": "up{job=\"litellm\"}" } ],
@@ -37,7 +37,7 @@ data:
           "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
         },
         {
-          "id": 3, "type": "stat", "title": "Backup model answers (last 5 min)",
+          "id": 3, "type": "stat", "title": "Backup answers (5 min)",
           "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [ { "refId": "A", "expr": "sum(increase(litellm_deployment_successful_fallbacks_total[5m])) or vector(0)" } ],
