@@ -62,6 +62,9 @@ spec:
             fallbacks:
               - chat-primary:
                   - chat-backup
+          litellm_settings:
+            callbacks:
+              - prometheus
           general_settings:
             master_key: os.environ/PROXY_MASTER_KEY
   destination:
