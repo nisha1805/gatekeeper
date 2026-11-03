@@ -20,4 +20,14 @@ This is a target I chose, not a measured result. Prometheus here keeps only 6 ho
 - No Alertmanager: alerts appear on the Prometheus Alerts page, and nobody is notified.
 - Low traffic makes the ratio jumpy, because a few failed requests move it a lot.
 - Production practice would use burn-rate alerts over several windows and a longer retention.
-- The fallback alert's metric name still has to be verified against real data.
+
+## What was tested (3 Nov 2026)
+- Pod kill: a new gateway pod was ready after about 45 seconds. Prometheus saw the target down for roughly 30 seconds. GatewayMetricsDown did not fire, because its hold time is 1 minute.
+- Fallback: with the primary model broken, 8 of 8 requests succeeded, the fallback counter reached 8 and GatewayFallbackActive fired. It cleared by itself after the primary was repaired.
+- Error rate: with both models broken, every request returned HTTP 500, but the first version of the success-ratio rule never fired, because with no successes the ratio became an empty result. The rule now treats no successes as zero. The fix was checked by replaying recorded data, where the ratio was 0 for ten minutes in a row. It has not been seen firing live.
+
+## Limits found by testing
+- With one gateway replica, every restart is about 45 seconds of unavailability. The effect on requests was not measured.
+- A degraded service running on the backup model does not move the success ratio, so it has its own alert.
+- Scrape-based monitoring can miss an outage shorter than the scrape interval (30 seconds).
+- A gateway that is completely unreachable is covered by GatewayMetricsDown, not by the ratio rule.
