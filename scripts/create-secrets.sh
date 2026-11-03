@@ -11,3 +11,7 @@ kubectl -n gateway create secret generic litellm-secrets \
   --from-literal=DB_USERNAME="$DB_USERNAME" \
   --from-literal=DB_PASSWORD="$DB_PASSWORD" \
   --dry-run=client -o yaml | kubectl apply -f -
+  kubectl -n observability create secret generic grafana-admin \
+  --from-literal=admin-user=admin \
+  --from-literal=admin-password="$GRAFANA_ADMIN_PASSWORD" \
+  --dry-run=client -o yaml | kubectl apply -f -
