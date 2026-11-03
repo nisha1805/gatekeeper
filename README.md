@@ -11,25 +11,12 @@ When several teams add AI features, three things get out of control: cost (nobod
 
 ## What works today
 **Pipeline**
-- GitHub Actions runs on every push: a gitleaks scan of the full history, Terraform format and validate, and Helm lint for both charts. No deployment and no secrets are involved.
-- Third-party actions are avoided. The only one used is GitHub's own checkout, pinned to an exact commit, and tools are installed at pinned versions. Trivy is not added yet: I want to install a pinned, checksum-verified release rather than trust a version tag.
+**Monitoring**
+- The gateway exposes Prometheus metrics on a dedicated in-cluster port. A small Prometheus scrapes them, and Grafana shows a dashboard that is provisioned from Git.
+- A written service level objective (99% of eligible chat requests succeed) with three alerts: success rate, metrics target down, and backup model in use.
+- I tested the alerts with real failures: a pod kill (recovery in about 45 seconds), a broken primary model (the fallback alert fired and cleared), and both models broken. The last drill found a bug in my success-rate rule, which I fixed. The fix was checked by replaying recorded data, not yet by firing live. See [the SLO notes](docs/engineering/slo.md) and [the runbook](docs/engineering/runbook.md).
 
-**Platform (Phase 1)**
-- One `terraform apply` builds a local Kubernetes cluster (kind), creates namespaces and installs Argo CD.
-- Argo CD watches this repo (app of apps). A change pushed to `deploy/` reaches the cluster without running `kubectl`.
-- A sample app is packaged as a Helm chart and deployed twice: dev (1 replica) and prod (2 replicas).
-- A Kyverno policy reje- A Kyverno policy rejects containers that do not set `runAsNonRoot`, in the sample namespaces and in the gateway namespace.
-- I tested a full destroy and rebuild: all applications and the policy came back from Git on their own.
-
-**Gateway (Phase 2, in progress)**
-- LiteLLM runs in the cluster with its own Postgres, deployed through Argo CD with pinned versions.
-- Two models sit behind one door: `chat-primary` (Claude Haiku) and `chat-backup` (Claude Sonnet). If the primary fails, the gateway retries once and then falls back to the backup.
-- I tested the fallback with an outage drill: I broke the primary through a Git commit, a request still returned an answer from the backup, and `git revert` repaired it.
-- Two teams each have their own virtual key and budget. In a test, a team with a tiny budget was blocked after a few requests while the other team kept working. Enforcement overshot the limit by about 18 percent, so budgets are a guard rail, not an exact limit.
-- `scripts/smoke-test.sh` checks the whole gateway in one command (6 checks, all passing on a fresh rebuild).
-- API keys never enter Git. They live in git-ignored local files, and a script loads them into the cluster.
-- The gateway (official non-root LiteLLM image) and Postgres run as non-root users, and the policy above refuses a root container in the gateway namespace. I checked this against the running cluster, not only against Git.
-
+![Gateway dashboard](docs/images/dashboard.png)
 ## What is not built yet
 
 Observability and SLOs, the evaluation gate in CI, the compliance module, guardrails and the product documents. Each is planned and will be listed above only once it works.

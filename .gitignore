@@ -226,3 +226,6 @@ __marimo__/
 .terraform/
 *.kubeconfig
 .env.*
+
+# macOS
+.DS_Store
