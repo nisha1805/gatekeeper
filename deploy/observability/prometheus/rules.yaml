@@ -10,7 +10,7 @@ data:
         rules:
           - record: gatekeeper:chat_success_ratio:rate5m
             expr: |
-              sum(rate(litellm_proxy_total_requests_metric_total{route="/v1/chat/completions",status_code=~"2.."}[5m]))
+              (sum(rate(litellm_proxy_total_requests_metric_total{route="/v1/chat/completions",status_code=~"2.."}[5m])) or vector(0))
               /
               sum(rate(litellm_proxy_total_requests_metric_total{route="/v1/chat/completions",status_code=~"2..|5.."}[5m]))
       - name: gatekeeper-alerts
