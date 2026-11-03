@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: observability
+data:
+  gatekeeper.yml: |
+    groups:
+      - name: gatekeeper-slo
+        rules:
+          - record: gatekeeper:chat_success_ratio:rate5m
+            expr: |
+              sum(rate(litellm_proxy_total_requests_metric_total{route="/v1/chat/completions",status_code=~"2.."}[5m]))
+              /
+              sum(rate(litellm_proxy_total_requests_metric_total{route="/v1/chat/completions",status_code=~"2..|5.."}[5m]))
+      - name: gatekeeper-alerts
+        rules:
+          - alert: GatewayChatErrorsHigh
+            expr: gatekeeper:chat_success_ratio:rate5m < 0.95
+            for: 2m
+            labels:
+              severity: page
+            annotations:
+              summary: "Fewer than 95% of chat requests succeeded over the last 5 minutes"
+          - alert: GatewayMetricsDown
+            expr: up{job="litellm"} == 0
+            for: 1m
+            labels:
+              severity: page
+            annotations:
+              summary: "Prometheus cannot scrape the gateway metrics"
+          - alert: GatewayFallbackActive
+            expr: sum(increase(litellm_deployment_successful_fallbacks_total[5m])) > 0
+            labels:
+              severity: ticket
+            annotations:
+              summary: "The backup model has been answering requests"
