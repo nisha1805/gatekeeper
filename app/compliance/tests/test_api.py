@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import api
+from store import MemoryStore
 from classifier import SystemDescription
 
 client = TestClient(api.app)
@@ -13,7 +14,7 @@ CV_SCREENING = {"name": "CV screening tool", "annex3_areas": ["employment"]}
 
 @pytest.fixture(autouse=True)
 def empty_store():
-    api._STORE.clear()
+    api.store = MemoryStore()
 
 
 def test_health_reports_the_rules_version():

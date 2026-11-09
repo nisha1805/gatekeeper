@@ -1,12 +1,13 @@
-"""Web API around the classifier. Results are kept in memory for now (step 5.3a)
-and move to an append-only Postgres table in step 5.3b.
+"""Web API around the classifier.
+
+Assessments and review decisions go through a store: Postgres when DATABASE_URL
+is set (append-only audit tables), otherwise memory.
 
 Decision support only, not legal advice.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from uuid import uuid4
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
@@ -18,11 +19,11 @@ from classifier import (
     SystemDescription,
     classify,
 )
+from store import make_store
 
 app = FastAPI(title="Gatekeeper compliance service", version=RULES_VERSION)
 
-# In-memory store for step 5.3a. Replaced by Postgres in 5.3b.
-_STORE: list[dict] = []
+store = make_store()
 
 
 class AssessmentRequest(BaseModel):
@@ -64,6 +65,17 @@ class AssessmentRequest(BaseModel):
         return SystemDescription(**data)
 
 
+class ReviewRequest(BaseModel):
+    """A reviewer's decision. The reviewer name is typed, not authenticated:
+    this is a prototype without login."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    decision: Literal["approved", "rejected"]
+    reviewer: str = Field(min_length=1, max_length=100)
+    comment: str | None = Field(None, max_length=1000)
+
+
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok", "rules_version": RULES_VERSION}
@@ -72,24 +84,27 @@ def health() -> dict:
 @app.post("/assessments", status_code=201)
 def create_assessment(request: AssessmentRequest) -> dict:
     assessment = classify(request.to_system())
-    record = {
-        "id": str(uuid4()),
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "request": request.model_dump(mode="json"),
-        "assessment": assessment.to_dict(),
-    }
-    _STORE.append(record)
-    return record
+    return store.add(request.model_dump(mode="json"), assessment.to_dict())
 
 
 @app.get("/assessments")
 def list_assessments() -> list[dict]:
-    return list(_STORE)
+    return store.list()
 
 
 @app.get("/assessments/{assessment_id}")
 def get_assessment(assessment_id: str) -> dict:
-    for record in _STORE:
-        if record["id"] == assessment_id:
-            return record
-    raise HTTPException(status_code=404, detail="assessment not found")
+    record = store.get(assessment_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="assessment not found")
+    return record
+
+
+@app.post("/assessments/{assessment_id}/reviews", status_code=201)
+def add_review(assessment_id: str, review: ReviewRequest) -> dict:
+    event = store.add_review(
+        assessment_id, review.decision, review.reviewer, review.comment
+    )
+    if event is None:
+        raise HTTPException(status_code=404, detail="assessment not found")
+    return event

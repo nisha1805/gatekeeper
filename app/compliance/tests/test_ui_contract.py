@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import api
+from store import MemoryStore
 from classifier import AnnexIIIArea, Role
 
 UI_LOGIC = pathlib.Path(__file__).resolve().parents[2] / "ui" / "ui_logic.py"
@@ -17,7 +18,7 @@ client = TestClient(api.app)
 
 @pytest.fixture(autouse=True)
 def empty_store():
-    api._STORE.clear()
+    api.store = MemoryStore()
 
 
 def test_the_ui_asks_exactly_the_questions_the_api_accepts():
