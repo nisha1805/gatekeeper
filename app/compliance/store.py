@@ -88,7 +88,7 @@ class PostgresStore:
         self._url = url
 
     def _connect(self):
-        return psycopg.connect(self._url, autocommit=True)
+        return psycopg.connect(self._url, autocommit=True, client_encoding="utf8")
 
     @staticmethod
     def _record(row) -> dict:
