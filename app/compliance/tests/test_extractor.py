@@ -166,3 +166,28 @@ def test_the_prompt_treats_the_description_as_untrusted_data():
     assert "untrusted" in system
     assert DESCRIPTION in user
     assert "annex3_areas" in user
+
+def test_a_decisive_answer_at_medium_confidence_needs_a_person():
+    result = run([answer("performs_profiling", True, "ranks candidates", "medium")])
+    proposal = by_field(result)["performs_profiling"]
+    assert proposal["applied"] is None
+    assert proposal["needs_confirmation"] is True
+    assert "highly sure" in proposal["reason"]
+
+
+def test_a_decisive_answer_at_high_confidence_is_applied():
+    result = run([answer("performs_profiling", True, "ranks candidates", "high")])
+    assert by_field(result)["performs_profiling"]["applied"] is True
+
+
+def test_an_ordinary_answer_at_medium_confidence_is_still_applied():
+    result = run([answer("interacts_directly_with_people", True, "ranks candidates", "medium")])
+    assert by_field(result)["interacts_directly_with_people"]["applied"] is True
+
+
+def test_profiling_is_flagged_when_it_is_only_proposed_at_medium_confidence():
+    result = run([
+        answer("annex3_areas", ["employment"], "ranks candidates for our recruiters"),
+        answer("performs_profiling", True, "ranks candidates", "medium"),
+    ])
+    assert "performs_profiling" in [item["field"] for item in result["check_these"]]

@@ -31,6 +31,19 @@ Rules:
 - For yes/no fields, propose only the value true. For the role field, the value is "provider" or "deployer". For annex3_areas, the value is a list of area codes."""
 
 
+# Answers that decide which path the rules take. The AI must be highly sure before
+# one of these is pre-filled; otherwise a person confirms it.
+DECISIVE_FIELDS = frozenset({
+    "annex3_areas",
+    "annex1_safety_component",
+    "performs_profiling",
+    "narrow_procedural_task",
+    "improves_prior_human_activity",
+    "detects_patterns_without_replacing_review",
+    "preparatory_task",
+})
+
+
 class LLMError(Exception):
     """The gateway could not be reached or answered badly."""
 
@@ -171,6 +184,8 @@ def extract(description: str, llm) -> dict:
             reason = "The AI is not sure."
         elif field in PROHIBITED_FIELDS:
             reason = "A prohibited practice must be confirmed by a person."
+        elif field in DECISIVE_FIELDS and confidence != "high":
+            reason = "This answer can change the result, so the AI must be highly sure. Please confirm it."
         elif field == "eu_nexus" and value is False:
             reason = "A system outside the EU must be confirmed by a person."
 
