@@ -19,11 +19,14 @@ from classifier import (
     SystemDescription,
     classify,
 )
+from extractor import ExtractionError, LLMError, extract, make_llm
+from questions import ANNEX_AREA_LABELS, QUESTIONS, ROLE_VALUES
 from store import make_store
 
 app = FastAPI(title="Gatekeeper compliance service", version=RULES_VERSION)
 
 store = make_store()
+llm = make_llm()
 
 
 class AssessmentRequest(BaseModel):
@@ -63,6 +66,14 @@ class AssessmentRequest(BaseModel):
         data = self.model_dump()
         data["annex3_areas"] = frozenset(self.annex3_areas)
         return SystemDescription(**data)
+
+
+class ExtractionRequest(BaseModel):
+    """A free-text description of an AI system. Enter synthetic or public data only."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    description: str = Field(min_length=20, max_length=4000)
 
 
 class ReviewRequest(BaseModel):
@@ -108,3 +119,30 @@ def add_review(assessment_id: str, review: ReviewRequest) -> dict:
     if event is None:
         raise HTTPException(status_code=404, detail="assessment not found")
     return event
+
+
+@app.get("/questions")
+def list_questions() -> dict:
+    """The question list, so that user interfaces do not need their own copy."""
+    return {
+        "questions": [
+            {"field": q.field, "kind": q.kind, "group": q.group, "text": q.text}
+            for q in QUESTIONS
+        ],
+        "annex3_areas": [
+            {"value": value, "label": label} for value, label in ANNEX_AREA_LABELS.items()
+        ],
+        "roles": list(ROLE_VALUES),
+    }
+
+
+@app.post("/extractions")
+def create_extraction(request: ExtractionRequest) -> dict:
+    """Propose answers from a description. The proposals are not classifications:
+    a person confirms them, and the written rules decide the tier."""
+    if llm is None:
+        raise HTTPException(status_code=503, detail="the AI step is not configured")
+    try:
+        return extract(request.description, llm)
+    except (LLMError, ExtractionError) as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
