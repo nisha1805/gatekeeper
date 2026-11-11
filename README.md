@@ -110,13 +110,21 @@ Tested on an Apple-silicon Mac with 8 GB of memory only. On a machine that size,
 Tools I use, and what for. Licences will be checked and listed here before the project is published.
 
 - LiteLLM: the gateway (keys, budgets, routing, fallback). I configure and test it. I did not write it.
-- Anthropic Claude models, through the API
+- Anthropic Claude models (Haiku and Sonnet), through the API: the gateway's models and the AI step
 - Argo CD: GitOps delivery
 - kind and the tehcyx kind Terraform provider: local cluster
 - Terraform, Helm: infrastructure and packaging
 - Kyverno: policy as code
-- PostgreSQL: the gateway's database
-- gitleaks: scans commits for secrets
+- PostgreSQL: the gateway's database and the append-only audit log
+- Prometheus and Grafana (community chart): metrics, alerts and the dashboard
+- FastAPI, pydantic, uvicorn and psycopg: the compliance API and its storage
+- Streamlit: the current test interface
+- pytest: all tests
+- gitleaks: scans commits and the full history for secrets
+- GitHub Actions: CI. The only third-party action used is GitHub's own checkout, pinned to a commit
+- Docker: runs the local cluster and a throwaway Postgres
+- The law: Regulation (EU) 2024/1689 as amended by Regulation (EU) 2026/1744. I read the text on a third-party reference site and have not yet checked it line by line on EUR-Lex.
+- Other open-source projects also classify AI systems under the EU AI Act. I looked only at their READMEs and copied no code.
 
 ## Honesty notes
 
