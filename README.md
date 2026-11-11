@@ -10,13 +10,38 @@ An AI gateway with EU AI Act compliance workflows, built as a hands-on portfolio
 When several teams add AI features, three things get out of control: cost (nobody knows what an answer costs), quality (prompts and models change without measurement) and compliance (EU AI Act duties need classification and evidence). See [the problem brief](docs/product/problem-brief.md).
 
 ## What works today
+
+**Platform**
+- One `terraform apply` builds a local Kubernetes cluster (kind), creates namespaces and installs Argo CD. Argo CD watches this repo, so a change pushed to `deploy/` reaches the cluster without running `kubectl`.
+- A sample app is packaged as a Helm chart and deployed twice: dev (1 replica) and prod (2 replicas).
+- A Kyverno policy rejects containers that do not run as non-root, in the sample namespaces and in the gateway namespace.
+- I tested a full destroy and rebuild: all applications and the policy came back from Git on their own.
+
+**Gateway**
+- LiteLLM runs in the cluster with its own Postgres, delivered through Argo CD with pinned versions, and runs as a non-root user.
+- Two models sit behind one door: `chat-primary` (Claude Haiku) and `chat-backup` (Claude Sonnet). If the primary fails, the gateway retries once and then falls back.
+- Each team has its own virtual key and budget. In a test, a team with a tiny budget was blocked after a few requests while another team kept working. Enforcement overshot by about 18 percent, so budgets are a guard rail, not an exact limit.
+- `scripts/smoke-test.sh` checks the whole gateway in one command.
+- API keys never enter Git. They live in git-ignored local files, and a script loads them into the cluster.
+
 **Pipeline**
+- GitHub Actions runs five jobs on every push: a gitleaks scan of the full history, Terraform format and validate, Helm lint for both charts, the API tests (83) against a throwaway Postgres, and the UI tests (10).
+- Third-party actions are avoided. The only one used is GitHub's own checkout, pinned to an exact commit, and tools are installed at pinned versions. Trivy is not added yet: I want to install a pinned, checksum-verified release rather than trust a version tag.
+
 **Monitoring**
 - The gateway exposes Prometheus metrics on a dedicated in-cluster port. A small Prometheus scrapes them, and Grafana shows a dashboard that is provisioned from Git.
 - A written service level objective (99% of eligible chat requests succeed) with three alerts: success rate, metrics target down, and backup model in use.
 - I tested the alerts with real failures: a pod kill (recovery in about 45 seconds), a broken primary model (the fallback alert fired and cleared), and both models broken. The last drill found a bug in my success-rate rule, which I fixed. The fix was checked by replaying recorded data, not yet by firing live. See [the SLO notes](docs/engineering/slo.md) and [the runbook](docs/engineering/runbook.md).
 
 ![Gateway dashboard](docs/images/dashboard.png)
+
+**Compliance module (prototype)**
+- The EU AI Act classifier is a set of written rules, not a model. Each result names the articles it used, and 15 tests pin the rules down. It follows the amended Act as I read it on a reference site, and it is not yet checked line by line against EUR-Lex.
+- A web API classifies a described system, stores every result, and records a reviewer's approve or reject decision. Misspelled fields are rejected instead of ignored.
+- Results and reviews go into an append-only Postgres audit log. The application's database user can only read and add rows, triggers block changes for everyone else, and tests prove the refusals, in CI as well. A database administrator could still switch triggers off.
+- The reviewer name is typed, not authenticated. There is no login.
+- A two-page Streamlit interface (copilot and audit trail) calls the API. It is a test harness, and real pages matching my design previews are planned.
+- The AI step is described below.
 
 ## AI in Gatekeeper
 
@@ -54,7 +79,7 @@ Where AI is used, what it is allowed to decide, and what is not built yet.
 
 ## What is not built yet
 
-Observability and SLOs, the evaluation gate in CI, the compliance module, guardrails and the product documents. Each is planned and will be listed above only once it works.
+The compliance service and its interface run locally and are not yet deployed through Argo CD. Also planned: the AI-written explanation, exact article text under the results, real pages matching my design previews, personal-data masking and rate limiting, a quality gate for the AI step in CI, Langfuse traces, and the product documents (case study and user interviews). Each is listed above only once it works.
 
 ## Quick start
 
