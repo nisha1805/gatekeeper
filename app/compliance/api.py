@@ -9,9 +9,12 @@ from __future__ import annotations
 
 from typing import Literal
 
+import hashlib
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
+from agreement import measure, summarise
 from classifier import (
     RULES_VERSION,
     AnnexIIIArea,
@@ -94,14 +97,41 @@ def health() -> dict:
 
 
 @app.post("/assessments", status_code=201)
-def create_assessment(request: AssessmentRequest) -> dict:
+def create_assessment(request: AssessmentRequest, extraction_id: str | None = None) -> dict:
+    """extraction_id (query parameter, optional): the AI proposals this assessment started
+    from. It is kept outside the request body so the body stays exactly the question list."""
+    if extraction_id is not None and store.get_extraction(extraction_id) is None:
+        raise HTTPException(status_code=404, detail="extraction not found")
     assessment = classify(request.to_system())
-    return store.add(request.model_dump(mode="json"), assessment.to_dict())
+    return store.add(request.model_dump(mode="json"), assessment.to_dict(), extraction_id)
 
 
 @app.get("/assessments")
 def list_assessments() -> list[dict]:
     return store.list()
+
+
+@app.get("/ai-agreement")
+def ai_agreement() -> dict:
+    """How often people kept the AI's proposals unchanged, over all assessments."""
+    measurements = []
+    for record in store.list():
+        if record.get("extraction_id"):
+            extraction = store.get_extraction(record["extraction_id"])
+            if extraction:
+                measurements.append(measure(extraction["result"], record["request"]))
+    return summarise(measurements)
+
+
+@app.get("/assessments/{assessment_id}/ai-agreement")
+def assessment_ai_agreement(assessment_id: str) -> dict:
+    record = store.get(assessment_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="assessment not found")
+    extraction = store.get_extraction(record["extraction_id"]) if record.get("extraction_id") else None
+    if extraction is None:
+        return {"ai_used": False}
+    return measure(extraction["result"], record["request"])
 
 
 @app.get("/assessments/{assessment_id}")
@@ -154,6 +184,9 @@ def create_extraction(request: ExtractionRequest) -> dict:
     if llm is None:
         raise HTTPException(status_code=503, detail="the AI step is not configured")
     try:
-        return extract(request.description, llm)
+        result = extract(request.description, llm)
     except (LLMError, ExtractionError) as error:
         raise HTTPException(status_code=502, detail=str(error)) from error
+    digest = hashlib.sha256(request.description.encode("utf-8")).hexdigest()
+    stored = store.add_extraction(result, digest)
+    return {**result, "extraction_id": stored["id"]}

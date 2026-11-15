@@ -39,14 +39,31 @@ def _review(decision, reviewer, reviewed_at) -> dict | None:
 class MemoryStore:
     def __init__(self) -> None:
         self._records: list[dict] = []
+        self._extractions: dict[str, dict] = {}
 
-    def add(self, request: dict, assessment: dict) -> dict:
+    def add_extraction(self, result: dict, description_sha256: str) -> dict:
+        extraction = {
+            "id": str(uuid4()),
+            "created_at": _utc(datetime.now(timezone.utc)),
+            "model": result.get("model", "unknown"),
+            "description_sha256": description_sha256,
+            "result": result,
+        }
+        self._extractions[extraction["id"]] = extraction
+        return dict(extraction)
+
+    def get_extraction(self, extraction_id: str) -> dict | None:
+        extraction = self._extractions.get(extraction_id)
+        return dict(extraction) if extraction else None
+
+    def add(self, request: dict, assessment: dict, extraction_id: str | None = None) -> dict:
         record = {
             "id": str(uuid4()),
             "created_at": _utc(datetime.now(timezone.utc)),
             "request": request,
             "assessment": assessment,
             "review": None,
+            "extraction_id": extraction_id,
         }
         self._records.append(record)
         return dict(record)
@@ -77,7 +94,7 @@ class MemoryStore:
 
 
 _COLUMNS = (
-    "id, created_at, request, assessment, review_decision, reviewer, reviewed_at"
+    "id, created_at, request, assessment, review_decision, reviewer, reviewed_at, extraction_id"
 )
 
 
@@ -98,18 +115,55 @@ class PostgresStore:
             "request": row[2],
             "assessment": row[3],
             "review": _review(row[4], row[5], row[6]),
+            "extraction_id": str(row[7]) if row[7] else None,
         }
 
-    def add(self, request: dict, assessment: dict) -> dict:
+    def add_extraction(self, result: dict, description_sha256: str) -> dict:
+        model = result.get("model", "unknown")
         with self._connect() as conn:
             row = conn.execute(
-                "INSERT INTO assessments (system_name, request, assessment, rules_version) "
-                "VALUES (%s, %s, %s, %s) RETURNING id, created_at",
+                "INSERT INTO extraction_events (model, description_sha256, result) "
+                "VALUES (%s, %s, %s) RETURNING id, created_at",
+                (model, description_sha256, Jsonb(result)),
+            ).fetchone()
+        return {
+            "id": str(row[0]),
+            "created_at": _utc(row[1]),
+            "model": model,
+            "description_sha256": description_sha256,
+            "result": result,
+        }
+
+    def get_extraction(self, extraction_id: str) -> dict | None:
+        if not _is_uuid(extraction_id):
+            return None
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT id, created_at, model, description_sha256, result "
+                "FROM extraction_events WHERE id = %s::uuid",
+                (extraction_id,),
+            ).fetchone()
+        if row is None:
+            return None
+        return {
+            "id": str(row[0]),
+            "created_at": _utc(row[1]),
+            "model": row[2],
+            "description_sha256": row[3],
+            "result": row[4],
+        }
+
+    def add(self, request: dict, assessment: dict, extraction_id: str | None = None) -> dict:
+        with self._connect() as conn:
+            row = conn.execute(
+                "INSERT INTO assessments (system_name, request, assessment, rules_version, extraction_id) "
+                "VALUES (%s, %s, %s, %s, %s::uuid) RETURNING id, created_at",
                 (
                     assessment["system_name"],
                     Jsonb(request),
                     Jsonb(assessment),
                     assessment["rules_version"],
+                    extraction_id,
                 ),
             ).fetchone()
         return {
@@ -118,12 +172,13 @@ class PostgresStore:
             "request": request,
             "assessment": assessment,
             "review": None,
+            "extraction_id": extraction_id,
         }
 
     def list(self) -> list[dict]:
         with self._connect() as conn:
             rows = conn.execute(
-                f"SELECT {_COLUMNS} FROM assessments_with_review ORDER BY created_at, id"
+                f"SELECT {_COLUMNS} FROM assessment_records ORDER BY created_at, id"
             ).fetchall()
         return [self._record(row) for row in rows]
 
@@ -132,7 +187,7 @@ class PostgresStore:
             return None
         with self._connect() as conn:
             row = conn.execute(
-                f"SELECT {_COLUMNS} FROM assessments_with_review WHERE id = %s::uuid",
+                f"SELECT {_COLUMNS} FROM assessment_records WHERE id = %s::uuid",
                 (assessment_id,),
             ).fetchone()
         return self._record(row) if row else None

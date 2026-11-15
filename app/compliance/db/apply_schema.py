@@ -16,7 +16,7 @@ from psycopg import sql
 def main() -> None:
     admin_url = os.environ["ADMIN_DATABASE_URL"]
     app_password = os.environ["APP_PASSWORD"]
-    schema = pathlib.Path(__file__).with_name("001_schema.sql").read_text()
+    files = sorted(pathlib.Path(__file__).parent.glob("0*.sql"))
     with psycopg.connect(admin_url, autocommit=True) as conn:
         exists = conn.execute(
             "SELECT 1 FROM pg_roles WHERE rolname = 'compliance_app'"
@@ -27,7 +27,8 @@ def main() -> None:
                     sql.Literal(app_password)
                 )
             )
-        conn.execute(schema)
+        for file in files:
+            conn.execute(file.read_text())
     print("schema applied")
 
 
