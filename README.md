@@ -25,7 +25,7 @@ When several teams add AI features, three things get out of control: cost (nobod
 - API keys never enter Git. They live in git-ignored local files, and a script loads them into the cluster.
 
 **Pipeline**
-- GitHub Actions runs five jobs on every push: a gitleaks scan of the full history, Terraform format and validate, Helm lint for both charts, the API tests (130) against a throwaway Postgres, and the UI tests (10).
+- GitHub Actions runs five jobs on every push: a gitleaks scan of the full history, Terraform format and validate, Helm lint for both charts, the API tests (139) against a throwaway Postgres, and the UI tests (10) plus the logic tests of the web page (11, run with Node).
 - Third-party actions are avoided. The only one used is GitHub's own checkout, pinned to an exact commit, and tools are installed at pinned versions. Trivy is not added yet: I want to install a pinned, checksum-verified release rather than trust a version tag.
 
 **Monitoring**
@@ -40,7 +40,8 @@ When several teams add AI features, three things get out of control: cost (nobod
 - A web API classifies a described system, stores every result, and records a reviewer's approve or reject decision. Misspelled fields are rejected instead of ignored.
 - Results and reviews go into an append-only Postgres audit log. The application's database user can only read and add rows, triggers block changes for everyone else, and tests prove the refusals, in CI as well. A database administrator could still switch triggers off.
 - The reviewer name is typed, not authenticated. There is no login.
-- A two-page Streamlit interface (copilot and audit trail) calls the API. It is a test harness, and real pages matching my design previews are planned.
+- A real web page, served by the API at `/app/`, walks through describe, AI-proposed answers, confirmation, result with cited articles and explanation, and a human review that is saved in the audit log. It uses no framework and no inline scripts, and the server sets a strict Content-Security-Policy. The audit page is not built yet.
+- A two-page Streamlit interface (copilot and audit trail) also calls the API. It is a test harness.
 - The AI step is described below.
 
 ## AI in Gatekeeper
@@ -80,7 +81,7 @@ Where AI is used, what it is allowed to decide, and what is not built yet.
 
 ## What is not built yet
 
-The compliance service and its interface run locally and are not yet deployed through Argo CD. Also planned: exact article text under the results, real pages matching my design previews, personal-data masking and rate limiting, a quality gate for the AI step in CI, Langfuse traces, and the product documents (case study and user interviews). Each is listed above only once it works.
+The compliance service and its interface run locally and are not yet deployed through Argo CD. Also planned: exact article text under the results, the audit page of the web interface, personal-data masking and rate limiting, a quality gate for the AI step in CI, Langfuse traces, and the product documents (case study and user interviews). Each is listed above only once it works.
 
 ## Quick start
 

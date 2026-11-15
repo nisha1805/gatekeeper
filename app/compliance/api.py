@@ -10,8 +10,11 @@ from __future__ import annotations
 from typing import Literal
 
 import hashlib
+from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from agreement import measure, summarise
@@ -31,6 +34,33 @@ app = FastAPI(title="Gatekeeper compliance service", version=RULES_VERSION)
 
 store = make_store()
 llm = make_llm()
+
+WEB_DIR = Path(__file__).parent / "web"
+
+# The pages load only their own scripts and styles. Nothing is inlined, so a script
+# injected through a description would not run even if it got into the page.
+PAGE_SECURITY_HEADERS = {
+    "Content-Security-Policy": (
+        "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
+        "connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+    ),
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer",
+}
+
+
+@app.middleware("http")
+async def add_page_headers(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/app"):
+        for name, value in PAGE_SECURITY_HEADERS.items():
+            response.headers[name] = value
+    return response
+
+
+@app.get("/", include_in_schema=False)
+def home() -> RedirectResponse:
+    return RedirectResponse("/app/")
 
 
 class AssessmentRequest(BaseModel):
@@ -190,3 +220,7 @@ def create_extraction(request: ExtractionRequest) -> dict:
     digest = hashlib.sha256(request.description.encode("utf-8")).hexdigest()
     stored = store.add_extraction(result, digest)
     return {**result, "extraction_id": stored["id"]}
+
+
+# Last, so the API routes above always win.
+app.mount("/app", StaticFiles(directory=WEB_DIR, html=True), name="pages")

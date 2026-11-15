@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gatekeeper: Compliance copilot</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">&#9670;</span> Gatekeeper</div>
+    <nav>
+      <a class="active" href="/app/">Compliance copilot</a>
+    </nav>
+    <p class="side-note">Prototype. Synthetic or public data only.</p>
+  </aside>
+
+  <main>
+    <header class="page-head">
+      <div>
+        <h1>Compliance copilot</h1>
+        <p class="lede">Describe an AI system in your own words. Gatekeeper's written rules classify it under the EU AI Act and cite the articles they used.</p>
+      </div>
+      <span class="badge badge-warn">Decision support, not legal advice</span>
+    </header>
+
+    <div class="columns">
+      <section class="panel" aria-labelledby="step1">
+        <h2 id="step1">1. Describe the system</h2>
+        <label class="field-label" for="name">System name</label>
+        <input id="name" type="text" maxlength="200" value="">
+        <div class="field-label">Start from a sample</div>
+        <div id="samples" class="chips"></div>
+        <label class="field-label" for="description">What the system does, who uses it and on whom</label>
+        <textarea id="description" rows="5" maxlength="4000" placeholder="At least 20 characters. Synthetic or public data only."></textarea>
+        <button id="read" class="btn btn-primary" type="button">Read description with AI</button>
+        <p id="read-status" class="status" role="status"></p>
+
+        <div id="answers" hidden>
+          <h2 id="step2">2. Confirm the answers</h2>
+          <p class="hint">The AI only proposes. You decide, and the written rules classify.</p>
+          <div id="proposed"></div>
+          <div id="check"></div>
+          <details id="other-wrap">
+            <summary>All other questions</summary>
+            <div id="other"></div>
+          </details>
+          <button id="classify" class="btn btn-primary" type="button">Classify</button>
+          <p id="classify-status" class="status" role="status"></p>
+        </div>
+      </section>
+
+      <section class="panel" id="result" aria-labelledby="step3">
+        <div id="empty">
+          <h2 id="step3">3. Result</h2>
+          <p class="hint">Read a description, confirm the answers and press Classify. You can also open "All other questions" and answer by hand.</p>
+          <ol class="flow">
+            <li><b>Read the description</b><span>The AI proposes answers to the questions, each with a quote.</span></li>
+            <li><b>You confirm the answers</b><span>Nothing is classified until you press Classify.</span></li>
+            <li><b>Apply the written rules</b><span>The rules decide the tier, not the AI.</span></li>
+            <li><b>Explain with sources</b><span>The explanation may only use the articles the rules cited.</span></li>
+          </ol>
+        </div>
+        <div id="result-body" hidden></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="logic.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

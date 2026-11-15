@@ -96,4 +96,7 @@ jobs:
           . .venv/bin/activate
           pip install -r requirements.txt
           pytest -q
+      - name: Run the web page logic tests
+        working-directory: app/compliance/web
+        run: node --test
   
