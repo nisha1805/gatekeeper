@@ -19,6 +19,7 @@ from classifier import (
     SystemDescription,
     classify,
 )
+from explainer import explain
 from extractor import ExtractionError, LLMError, extract, make_llm
 from questions import ANNEX_AREA_LABELS, QUESTIONS, ROLE_VALUES
 from store import make_store
@@ -119,6 +120,16 @@ def add_review(assessment_id: str, review: ReviewRequest) -> dict:
     if event is None:
         raise HTTPException(status_code=404, detail="assessment not found")
     return event
+
+
+@app.post("/assessments/{assessment_id}/explanation")
+def explain_assessment(assessment_id: str) -> dict:
+    """A plain-language explanation of a stored assessment. The AI may only use the
+    articles the rules cited; if it fails or breaks that rule, a fixed template is used."""
+    record = store.get(assessment_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="assessment not found")
+    return explain(record["assessment"], llm)
 
 
 @app.get("/questions")

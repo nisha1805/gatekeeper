@@ -25,7 +25,7 @@ When several teams add AI features, three things get out of control: cost (nobod
 - API keys never enter Git. They live in git-ignored local files, and a script loads them into the cluster.
 
 **Pipeline**
-- GitHub Actions runs five jobs on every push: a gitleaks scan of the full history, Terraform format and validate, Helm lint for both charts, the API tests (83) against a throwaway Postgres, and the UI tests (10).
+- GitHub Actions runs five jobs on every push: a gitleaks scan of the full history, Terraform format and validate, Helm lint for both charts, the API tests (107) against a throwaway Postgres, and the UI tests (10).
 - Third-party actions are avoided. The only one used is GitHub's own checkout, pinned to an exact commit, and tools are installed at pinned versions. Trivy is not added yet: I want to install a pinned, checksum-verified release rather than trust a version tag.
 
 **Monitoring**
@@ -55,7 +55,7 @@ Where AI is used, what it is allowed to decide, and what is not built yet.
 | Outage drills | I broke the primary model on purpose and checked that the backup answered and that an alert fired and cleared | Done, evidence in the logbook |
 | AI monitoring | Requests per model, failures, backup use, a written 99% target and three alerts, in Prometheus and Grafana | Built |
 | Answer proposals from free text | `POST /extractions` sends a description through the gateway, and the model proposes answers to the questionnaire, each with a quote from the description | Built, checked on a real model |
-| AI-written explanation using only the cited articles | The model explains the result, and the code rejects any mention of an article the rules did not cite | Planned |
+| AI-written explanation using only the cited articles | `POST /assessments/{id}/explanation`: the model explains the result, and the code rejects any mention of an article, paragraph or annex point the rules did not cite, or any year. A fixed template is used if the AI fails or is rejected | Built, tested with a fake model, not yet run on a real one |
 | Exact article text under "Sources" | Lookup of the cited articles | Planned |
 | Vector search over the whole AI Act | Retrieval for free-text questions about the Act | Not built, only if time allows |
 | Personal-data masking and rate limiting | A minimal version before any public demo | Planned |
@@ -79,7 +79,7 @@ Where AI is used, what it is allowed to decide, and what is not built yet.
 
 ## What is not built yet
 
-The compliance service and its interface run locally and are not yet deployed through Argo CD. Also planned: the AI-written explanation, exact article text under the results, real pages matching my design previews, personal-data masking and rate limiting, a quality gate for the AI step in CI, Langfuse traces, and the product documents (case study and user interviews). Each is listed above only once it works.
+The compliance service and its interface run locally and are not yet deployed through Argo CD. Also planned: exact article text under the results, real pages matching my design previews, personal-data masking and rate limiting, a quality gate for the AI step in CI, Langfuse traces, and the product documents (case study and user interviews). Each is listed above only once it works.
 
 ## Quick start
 
