@@ -75,3 +75,67 @@ test("value text", () => {
   assert.strictEqual(L.valueText(Q[3], ["employment"], { employment: "Employment" }), "Employment");
   assert.strictEqual(L.valueText(Q[3], [], {}), "None");
 });
+
+// ---- audit page ----
+
+const rec = (id, time, name, tier, reasons, review, extraction) => ({
+  id, created_at: time, extraction_id: extraction || null, review: review || null,
+  assessment: { system_name: name, tier, reasons: reasons.map(a => ({ article: a, text: "t" })), transparency_duties: [] },
+});
+const RECORDS = [
+  rec("1", "2026-11-09T21:21:00+00:00", "CV tool", "high_risk", ["Art. 6(2), Annex III point 4"], null, "e1"),
+  rec("2", "2026-11-10T08:05:00+00:00", "Scoring app", "prohibited", ["Art. 5(1)(c)"], { decision: "approved", reviewer: "A" }),
+  rec("3", "2026-11-08T10:00:00+00:00", "Spam filter", "minimal_risk", ["Art. 5, 6, 50"], { decision: "rejected", reviewer: "B" }),
+];
+
+test("rows are newest first and carry review state", () => {
+  const rows = L.toRows(RECORDS);
+  assert.deepStrictEqual(rows.map(r => r.id), ["2", "1", "3"]);
+  assert.strictEqual(rows[1].review, "pending");
+  assert.strictEqual(rows[0].reviewer, "A");
+  assert.strictEqual(rows[1].aiUsed, true);
+  assert.strictEqual(rows[0].aiUsed, false);
+});
+
+test("filters by result, review and search", () => {
+  const rows = L.toRows(RECORDS);
+  assert.deepStrictEqual(L.filterRows(rows, { tier: "prohibited" }).map(r => r.id), ["2"]);
+  assert.deepStrictEqual(L.filterRows(rows, { review: "pending" }).map(r => r.id), ["1"]);
+  assert.deepStrictEqual(L.filterRows(rows, { search: "annex iii" }).map(r => r.id), ["1"]);
+  assert.deepStrictEqual(L.filterRows(rows, { search: "SPAM" }).map(r => r.id), ["3"]);
+  assert.strictEqual(L.filterRows(rows, { tier: "all", review: "all", search: "" }).length, 3);
+});
+
+test("stats count each review state", () => {
+  assert.deepStrictEqual(L.stats(L.toRows(RECORDS)), { total: 3, pending: 1, approved: 1, rejected: 1 });
+});
+
+test("time is shown in UTC", () => {
+  assert.strictEqual(L.formatTime("2026-11-09T21:21:00+00:00"), "9 Nov, 21:21");
+  assert.strictEqual(L.formatTime("2026-11-09T21:21:00+01:00"), "9 Nov, 20:21");
+  assert.strictEqual(L.formatTime("garbage"), "garbage");
+});
+
+test("cited articles are listed once", () => {
+  assert.deepStrictEqual(L.citedArticles({ reasons: [{ article: "Art. 50(1)" }], transparency_duties: [{ article: "Art. 50(1)" }] }), ["Art. 50(1)"]);
+});
+
+test("csv cells are quoted and formulas are defused", () => {
+  assert.strictEqual(L.csvCell('a "b", c'), '"a ""b"", c"');
+  assert.strictEqual(L.csvCell("=HYPERLINK(1)"), "'=HYPERLINK(1)");
+  assert.strictEqual(L.csvCell("+1"), "'+1");
+  assert.strictEqual(L.csvCell("@x"), "'@x");
+  assert.strictEqual(L.csvCell(null), "");
+});
+
+test("csv has a header and one line per row", () => {
+  const lines = L.toCsv(L.toRows(RECORDS)).trim().split("\n");
+  assert.strictEqual(lines.length, 4);
+  assert.match(lines[0], /^time_utc,system,result/);
+});
+
+test("agreement text", () => {
+  assert.match(L.agreementText({ ai_used: false }), /No AI proposals/);
+  assert.match(L.agreementText({ ai_used: true, proposed: 3, accepted_unchanged: 2, changed: 1, added_by_person: ["x"] }),
+    /proposed 3 answers: 2 kept unchanged, 1 changed\. The person added 1 more/);
+});

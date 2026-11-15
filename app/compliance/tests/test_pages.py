@@ -29,14 +29,26 @@ def test_the_page_has_a_strict_content_security_policy():
 
 
 def test_the_policy_is_also_sent_with_scripts_and_styles():
-    for path in ("/app/app.js", "/app/logic.js", "/app/style.css"):
+    for path in ("/app/app.js", "/app/audit.js", "/app/logic.js", "/app/style.css"):
         response = client.get(path)
         assert response.status_code == 200, path
         assert "content-security-policy" in response.headers
 
 
-def test_the_page_has_no_inline_script_or_style():
-    html = client.get("/app/").text
+def test_the_audit_page_is_served_and_linked_from_the_start_page():
+    audit = client.get("/app/audit.html")
+    assert audit.status_code == 200
+    assert "Audit trail" in audit.text
+    assert "content-security-policy" in audit.headers
+    assert 'href="/app/audit.html"' in client.get("/app/").text
+
+
+def test_the_pages_have_no_inline_script_or_style():
+    for path in ("/app/", "/app/audit.html"):
+        check_no_inline(client.get(path).text)
+
+
+def check_no_inline(html):
     assert not re.search(r"<script(?![^>]*\bsrc=)", html)
     assert "<style" not in html
     assert " style=" not in html
@@ -44,7 +56,7 @@ def test_the_page_has_no_inline_script_or_style():
 
 
 def test_the_scripts_never_write_server_text_as_html():
-    for path in ("/app/app.js", "/app/logic.js"):
+    for path in ("/app/app.js", "/app/audit.js", "/app/logic.js"):
         source = client.get(path).text
         assert "innerHTML" not in source and "outerHTML" not in source
         assert "insertAdjacentHTML" not in source and "document.write" not in source

@@ -89,9 +89,86 @@
     return String(value);
   }
 
+  // ---- audit page ----------------------------------------------------------
+
+  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+
+  // "9 Nov, 21:21" in UTC, so the table reads the same on every computer.
+  function formatTime(iso) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso);
+    return d.getUTCDate() + " " + MONTHS[d.getUTCMonth()] + ", " + pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes());
+  }
+
+  function citedArticles(assessment) {
+    var seen = {}, list = [];
+    assessment.reasons.concat(assessment.transparency_duties).forEach(function (item) {
+      if (!seen[item.article]) { seen[item.article] = true; list.push(item.article); }
+    });
+    return list;
+  }
+
+  // Newest first. "pending" means no review decision yet.
+  function toRows(records) {
+    return records.map(function (r) {
+      return {
+        id: r.id, time: r.created_at, name: r.assessment.system_name, tier: r.assessment.tier,
+        cited: citedArticles(r.assessment),
+        review: r.review ? r.review.decision : "pending",
+        reviewer: r.review ? r.review.reviewer : "",
+        aiUsed: !!r.extraction_id, record: r,
+      };
+    }).sort(function (a, b) { return a.time < b.time ? 1 : a.time > b.time ? -1 : 0; });
+  }
+
+  function filterRows(rows, filters) {
+    var needle = (filters.search || "").trim().toLowerCase();
+    return rows.filter(function (row) {
+      if (filters.tier && filters.tier !== "all" && row.tier !== filters.tier) return false;
+      if (filters.review && filters.review !== "all" && row.review !== filters.review) return false;
+      if (needle && (row.name + " " + row.cited.join(" ")).toLowerCase().indexOf(needle) === -1) return false;
+      return true;
+    });
+  }
+
+  function stats(rows) {
+    var out = { total: rows.length, pending: 0, approved: 0, rejected: 0 };
+    rows.forEach(function (row) { out[row.review] += 1; });
+    return out;
+  }
+
+  // A cell that starts with = + - or @ would be run as a formula by a spreadsheet.
+  function csvCell(value) {
+    var text = value === null || value === undefined ? "" : String(value);
+    if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
+    if (/[",\n\r]/.test(text)) text = '"' + text.replace(/"/g, '""') + '"';
+    return text;
+  }
+
+  function toCsv(rows) {
+    var lines = [["time_utc", "system", "result", "cited", "review", "reviewer", "ai_used", "id"].join(",")];
+    rows.forEach(function (row) {
+      lines.push([row.time, row.name, row.tier, row.cited.join("; "), row.review, row.reviewer,
+        row.aiUsed ? "yes" : "no", row.id].map(csvCell).join(","));
+    });
+    return lines.join("\n") + "\n";
+  }
+
+  function agreementText(result) {
+    if (!result || !result.ai_used) return "No AI proposals were used for this assessment.";
+    var text = "The AI proposed " + result.proposed + " answer" + (result.proposed === 1 ? "" : "s") + ": " +
+      result.accepted_unchanged + " kept unchanged, " + result.changed + " changed.";
+    if (result.added_by_person.length) text += " The person added " + result.added_by_person.length + " more.";
+    return text;
+  }
+
   var api = { defaults: defaults, initialAnswers: initialAnswers, splitQuestions: splitQuestions,
     groupQuestions: groupQuestions, buildPayload: buildPayload, tierInfo: tierInfo,
-    confidenceText: confidenceText, valueText: valueText };
+    confidenceText: confidenceText, valueText: valueText,
+    formatTime: formatTime, citedArticles: citedArticles, toRows: toRows, filterRows: filterRows,
+    stats: stats, csvCell: csvCell, toCsv: toCsv, agreementText: agreementText };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.Logic = api;
 })(this);

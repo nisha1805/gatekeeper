@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gatekeeper: Audit trail</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">&#9670;</span> Gatekeeper</div>
+    <nav>
+      <a href="/app/">Compliance copilot</a>
+      <a class="active" href="/app/audit.html">Audit trail</a>
+    </nav>
+    <p class="side-note">Prototype. Synthetic or public data only.</p>
+  </aside>
+
+  <main>
+    <header class="page-head">
+      <div>
+        <h1>Audit trail</h1>
+        <p class="lede">Every classification, who reviewed it and what it cited. Entries are append-only in the database: nothing is edited or deleted through the application.</p>
+      </div>
+      <span class="badge badge-warn">Decision support, not legal advice</span>
+    </header>
+
+    <div class="tiles" id="tiles" aria-live="polite"></div>
+
+    <section class="panel">
+      <div class="filters">
+        <div><label class="field-label" for="f-tier">Result</label>
+          <select id="f-tier">
+            <option value="all">All</option>
+            <option value="prohibited">Prohibited</option>
+            <option value="high_risk">High risk</option>
+            <option value="limited_risk">Limited risk</option>
+            <option value="minimal_risk">Minimal risk</option>
+            <option value="out_of_scope">Out of scope</option>
+          </select></div>
+        <div><label class="field-label" for="f-review">Review</label>
+          <select id="f-review">
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select></div>
+        <div class="grow"><label class="field-label" for="f-search">Search</label>
+          <input id="f-search" type="text" placeholder="System name or article"></div>
+        <div class="export">
+          <button id="export-json" class="btn btn-small" type="button">Export JSON</button>
+          <button id="export-csv" class="btn btn-small" type="button">Export CSV</button>
+        </div>
+      </div>
+      <p id="audit-status" class="status" role="status"></p>
+      <div class="table-wrap">
+        <table class="audit">
+          <thead><tr>
+            <th>Time (UTC)</th><th>System</th><th>Result</th><th>Cited</th><th>Review</th><th>Reviewer</th><th>AI</th><th></th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p class="hint">Reviews are new rows: the latest decision counts and the earlier ones stay in the log.</p>
+    </section>
+  </main>
+
+  <script src="logic.js"></script>
+  <script src="audit.js"></script>
+</body>
+</html>
