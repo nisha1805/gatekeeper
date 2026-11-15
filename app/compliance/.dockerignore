@@ -1,0 +1,10 @@
+.venv
+__pycache__
+.pytest_cache
+tests
+pytest.ini
+requirements.txt
+web/logic.test.js
+data/build_ai_act_data.py
+Dockerfile
+.dockerignore
