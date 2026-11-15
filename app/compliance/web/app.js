@@ -190,6 +190,34 @@
     }).then(function () { button.disabled = false; });
   }
 
+  function provisionNode(provision) {
+    var summary = el("summary", {}, [el("b", { text: provision.label }),
+      document.createTextNode(provision.heading ? " \u00b7 " + provision.heading : "")]);
+    var status = Logic.provisionStatus(provision);
+    var box = el("details", { class: "provision" }, [summary]);
+    if (status) box.appendChild(el("span", { class: "tag warn", text: status }));
+    if (provision.context) box.appendChild(el("p", { class: "legal-context", text: provision.context }));
+    if (provision.text) box.appendChild(el("p", { class: "legal-text", text: provision.text }));
+    (provision.added || []).forEach(function (extra) {
+      box.appendChild(el("p", { class: "legal-text added", text: extra.label + " (added by Regulation (EU) 2026/1744): " + extra.text }));
+    });
+    if (provision.note) box.appendChild(el("p", { class: "source-note", text: provision.note }));
+    return box;
+  }
+
+  function loadSources(id, container) {
+    request("GET", "/assessments/" + id + "/sources").then(function (data) {
+      container.textContent = "";
+      data.items.forEach(function (item) {
+        item.provisions.forEach(function (provision) { container.appendChild(provisionNode(provision)); });
+      });
+      container.appendChild(el("p", { class: "source-note", text: Logic.sourceLine(data.meta) }));
+    }).catch(function () {
+      container.textContent = "";
+      container.appendChild(el("p", { class: "source-note", text: "The article text could not be loaded. The cited articles above are still the result." }));
+    });
+  }
+
   function renderResult(record, explanation) {
     var a = record.assessment, tier = Logic.tierInfo(a.tier);
     var body = $("result-body");
@@ -216,6 +244,11 @@
     cited.forEach(function (item) {
       body.appendChild(el("div", { class: "cite" }, [el("b", { text: item.article }), document.createTextNode(item.text)]));
     });
+
+    var sources = el("div", { class: "sources", id: "sources" }, [el("p", { class: "source-note", text: "Loading the exact article text\u2026" })]);
+    body.appendChild(el("h2", { text: "Sources from the AI Act" }));
+    body.appendChild(sources);
+    loadSources(record.id, sources);
 
     if (a.notes.length) {
       body.appendChild(el("h2", { text: "Notes" }));

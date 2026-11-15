@@ -185,9 +185,22 @@
     return notices;
   }
 
+  // The small label next to a provision in the Sources section.
+  function provisionStatus(provision) {
+    if (provision.status === "added") return "Added by Regulation (EU) 2026/1744";
+    if (provision.status === "not_included") return provision.text ? "" : "Exact text not included";
+    return "";
+  }
+
+  function sourceLine(meta) {
+    return "Copied on " + meta.retrieved + " from Regulation (EU) 2024/1689 and its amendment, Regulation (EU) 2026/1744, on EUR-Lex. " +
+      meta.not_official;
+  }
+
   var api = { defaults: defaults, initialAnswers: initialAnswers, splitQuestions: splitQuestions,
     groupQuestions: groupQuestions, buildPayload: buildPayload, tierInfo: tierInfo,
     confidenceText: confidenceText, valueText: valueText, extractionNotices: extractionNotices,
+    provisionStatus: provisionStatus, sourceLine: sourceLine,
     formatTime: formatTime, citedArticles: citedArticles, toRows: toRows, filterRows: filterRows,
     stats: stats, csvCell: csvCell, toCsv: toCsv, agreementText: agreementText };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

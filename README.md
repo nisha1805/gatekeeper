@@ -25,7 +25,7 @@ When several teams add AI features, three things get out of control: cost (nobod
 - API keys never enter Git. They live in git-ignored local files, and a script loads them into the cluster.
 
 **Pipeline**
-- GitHub Actions runs five jobs on every push: a gitleaks scan of the full history, Terraform format and validate, Helm lint for both charts, the API tests (177) against a throwaway Postgres, and the UI tests (10) plus the logic tests of the web pages (21, run with Node).
+- GitHub Actions runs five jobs on every push: a gitleaks scan of the full history, Terraform format and validate, Helm lint for both charts, the API tests (191) against a throwaway Postgres, and the UI tests (10) plus the logic tests of the web pages (23, run with Node).
 - Third-party actions are avoided. The only one used is GitHub's own checkout, pinned to an exact commit, and tools are installed at pinned versions. Trivy is not added yet: I want to install a pinned, checksum-verified release rather than trust a version tag.
 
 **Monitoring**
@@ -58,7 +58,7 @@ Where AI is used, what it is allowed to decide, and what is not built yet.
 | Answer proposals from free text | `POST /extractions` sends a description through the gateway, and the model proposes answers to the questionnaire, each with a quote from the description | Built, checked on a real model |
 | AI-written explanation using only the cited articles | `POST /assessments/{id}/explanation`: the model explains the result, and the code rejects any mention of an article, paragraph or annex point the rules did not cite, or any year. A fixed template is used if the AI fails or is rejected | Built, tested with a fake model, not yet run on a real one |
 | AI proposals stored next to the final answers | `POST /extractions` saves the proposals (not the description, only its hash) in an append-only table. `GET /assessments/{id}/ai-agreement` and `GET /ai-agreement` show how often people kept the AI's answers unchanged | Built and tested, including on Postgres |
-| Exact article text under "Sources" | Lookup of the cited articles | Planned |
+| Exact article text under "Sources" | `GET /assessments/{id}/sources` returns the exact wording of every article the rules cited, copied by a script from EUR-Lex (Regulation 2024/1689 and its amendment 2026/1744) with a SHA-256 fingerprint per text. No AI is involved, and the result page shows it under each result | Built and tested. It is a convenience copy: only the Official Journal text is authentic. Paragraphs are copied only for the cited provisions, and the copy is not refreshed automatically |
 | Vector search over the whole AI Act | Retrieval for free-text questions about the Act | Not built, only if time allows |
 | Personal-data masking, instruction check and rate limiting | E-mail addresses, IBANs, card numbers and phone numbers are masked before the AI reads the text. Instruction-like text switches off all pre-filling. The two AI endpoints are limited per client and overall | Built, minimal. Names and addresses are not detected, and the limits are per process and reset on restart |
 | Quality gate in CI for the AI step | A test set that blocks a release if answers get worse | Planned |

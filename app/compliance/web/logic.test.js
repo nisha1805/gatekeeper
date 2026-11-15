@@ -151,3 +151,16 @@ test("notices tell what was masked and flag instruction-like text", () => {
 test("notices work for an old extraction without the new fields", () => {
   assert.deepStrictEqual(L.extractionNotices({}), []);
 });
+
+test("provision labels say what is added or missing", () => {
+  assert.strictEqual(L.provisionStatus({ status: "added", text: "x" }), "Added by Regulation (EU) 2026/1744");
+  assert.strictEqual(L.provisionStatus({ status: "not_included", text: null }), "Exact text not included");
+  assert.strictEqual(L.provisionStatus({ status: "original", text: "x" }), "");
+});
+
+test("the source line names the date and the legal caveat", () => {
+  const line = L.sourceLine({ retrieved: "2026-11-15", not_official: "Only the Official Journal is authentic." });
+  assert.match(line, /2026-11-15/);
+  assert.match(line, /EUR-Lex/);
+  assert.match(line, /authentic/);
+});

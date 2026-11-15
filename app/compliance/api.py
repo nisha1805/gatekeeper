@@ -20,6 +20,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from agreement import measure, summarise
+from articles import sources_for
 from classifier import (
     RULES_VERSION,
     AnnexIIIArea,
@@ -158,6 +159,16 @@ def create_assessment(request: AssessmentRequest, extraction_id: str | None = No
 @app.get("/assessments")
 def list_assessments() -> list[dict]:
     return store.list()
+
+
+@app.get("/assessments/{assessment_id}/sources")
+def assessment_sources(assessment_id: str) -> dict:
+    """The exact text of every article the assessment cites, copied from EUR-Lex.
+    No AI is involved in this endpoint."""
+    record = store.get(assessment_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="assessment not found")
+    return sources_for(record["assessment"])
 
 
 @app.get("/ai-agreement")
