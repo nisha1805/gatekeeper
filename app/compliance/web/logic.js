@@ -164,9 +164,30 @@
     return text;
   }
 
+  var KIND_NAMES = { email: ["e-mail address", "e-mail addresses"], iban: ["IBAN", "IBANs"], card: ["card number", "card numbers"], phone: ["phone number", "phone numbers"] };
+
+  // Notices to show after the AI has read a description.
+  function extractionNotices(extraction) {
+    var notices = [];
+    var counts = extraction.personal_data_masked || {}, parts = [], total = 0;
+    Object.keys(counts).forEach(function (kind) {
+      total += counts[kind];
+      var names = KIND_NAMES[kind] || [kind, kind];
+      parts.push(counts[kind] + " " + names[counts[kind] === 1 ? 0 : 1]);
+    });
+    if (total) {
+      notices.push(total + " personal data item" + (total === 1 ? "" : "s") + " (" + parts.join(", ") +
+        ") masked before the AI read the text. Names and addresses are not detected, so please do not enter them.");
+    }
+    if (extraction.instruction_like_text) {
+      notices.push("The description contains text that looks like instructions to the AI. It was treated as data, and every proposal needs your confirmation.");
+    }
+    return notices;
+  }
+
   var api = { defaults: defaults, initialAnswers: initialAnswers, splitQuestions: splitQuestions,
     groupQuestions: groupQuestions, buildPayload: buildPayload, tierInfo: tierInfo,
-    confidenceText: confidenceText, valueText: valueText,
+    confidenceText: confidenceText, valueText: valueText, extractionNotices: extractionNotices,
     formatTime: formatTime, citedArticles: citedArticles, toRows: toRows, filterRows: filterRows,
     stats: stats, csvCell: csvCell, toCsv: toCsv, agreementText: agreementText };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

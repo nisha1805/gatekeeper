@@ -146,8 +146,11 @@ def _valid_value(kind: str, value):
     return None
 
 
-def extract(description: str, llm) -> dict:
-    """Ask the AI for proposals, then check every one before returning it."""
+def extract(description: str, llm, suspicious: bool = False) -> dict:
+    """Ask the AI for proposals, then check every one before returning it.
+
+    suspicious: the description contains instruction-like text. Then nothing is
+    pre-filled, so a person has to confirm every proposal."""
     raw = llm.complete(SYSTEM_PROMPT, build_user_message(description))
     answers = _parse(raw)
     haystack = _normalise(description)
@@ -188,6 +191,9 @@ def extract(description: str, llm) -> dict:
             reason = "This answer can change the result, so the AI must be highly sure. Please confirm it."
         elif field == "eu_nexus" and value is False:
             reason = "A system outside the EU must be confirmed by a person."
+
+        if suspicious and reason is None:
+            reason = "The description contains text that looks like instructions to the AI. Please confirm."
 
         proposals.append({
             "field": field,

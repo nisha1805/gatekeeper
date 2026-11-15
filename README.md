@@ -25,7 +25,7 @@ When several teams add AI features, three things get out of control: cost (nobod
 - API keys never enter Git. They live in git-ignored local files, and a script loads them into the cluster.
 
 **Pipeline**
-- GitHub Actions runs five jobs on every push: a gitleaks scan of the full history, Terraform format and validate, Helm lint for both charts, the API tests (140) against a throwaway Postgres, and the UI tests (10) plus the logic tests of the web pages (19, run with Node).
+- GitHub Actions runs five jobs on every push: a gitleaks scan of the full history, Terraform format and validate, Helm lint for both charts, the API tests (177) against a throwaway Postgres, and the UI tests (10) plus the logic tests of the web pages (21, run with Node).
 - Third-party actions are avoided. The only one used is GitHub's own checkout, pinned to an exact commit, and tools are installed at pinned versions. Trivy is not added yet: I want to install a pinned, checksum-verified release rather than trust a version tag.
 
 **Monitoring**
@@ -60,7 +60,7 @@ Where AI is used, what it is allowed to decide, and what is not built yet.
 | AI proposals stored next to the final answers | `POST /extractions` saves the proposals (not the description, only its hash) in an append-only table. `GET /assessments/{id}/ai-agreement` and `GET /ai-agreement` show how often people kept the AI's answers unchanged | Built and tested, including on Postgres |
 | Exact article text under "Sources" | Lookup of the cited articles | Planned |
 | Vector search over the whole AI Act | Retrieval for free-text questions about the Act | Not built, only if time allows |
-| Personal-data masking and rate limiting | A minimal version before any public demo | Planned |
+| Personal-data masking, instruction check and rate limiting | E-mail addresses, IBANs, card numbers and phone numbers are masked before the AI reads the text. Instruction-like text switches off all pre-filling. The two AI endpoints are limited per client and overall | Built, minimal. Names and addresses are not detected, and the limits are per process and reset on restart |
 | Quality gate in CI for the AI step | A test set that blocks a release if answers get worse | Planned |
 | Langfuse traces | Cloud tier, synthetic data only | Planned |
 | LangChain, agents, fine-tuning | | Not used |
@@ -72,6 +72,7 @@ Where AI is used, what it is allowed to decide, and what is not built yet.
 - The model must answer in a fixed JSON shape. Unknown fields, wrong types and duplicates are dropped and counted.
 - Answers that can change the result (Annex III areas, profiling, the exceptions) are pre-filled only when the model is highly sure.
 - Prohibited practices and "outside the EU" are never pre-filled, so a prompt injection cannot produce a banned result without a person.
+- Text that looks like an instruction to the AI (for example "ignore all previous instructions") switches off all pre-filling, so a person confirms every answer. This is a simple pattern check and will not catch every attempt.
 - The prompt tells the model that the description is untrusted data. Descriptions are limited to 4000 characters. Enter synthetic or public data only.
 - Gateway errors are reported without the key, and nothing is guessed when the model fails.
 
@@ -81,7 +82,7 @@ Where AI is used, what it is allowed to decide, and what is not built yet.
 
 ## What is not built yet
 
-The compliance service and its interface run locally and are not yet deployed through Argo CD. Also planned: exact article text under the results, personal-data masking and rate limiting, a quality gate for the AI step in CI, Langfuse traces, and the product documents (case study and user interviews). Each is listed above only once it works.
+The compliance service and its interface run locally and are not yet deployed through Argo CD. Also planned: exact article text under the results, a quality gate for the AI step in CI, Langfuse traces, and the product documents (case study and user interviews). Each is listed above only once it works.
 
 ## Quick start
 

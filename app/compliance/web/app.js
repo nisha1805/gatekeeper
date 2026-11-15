@@ -144,6 +144,12 @@
 
   // ---- steps ----------------------------------------------------------------
 
+  function renderNotices(notices) {
+    var list = $("read-notes");
+    list.textContent = "";
+    notices.forEach(function (text) { list.appendChild(el("li", { text: text })); });
+  }
+
   function readDescription() {
     var description = $("description").value.trim();
     if (description.length < 20) { setStatus("read-status", "Please write at least 20 characters.", true); return; }
@@ -155,11 +161,13 @@
       state.answers = Logic.initialAnswers(state.questions, extraction);
       var n = extraction.proposals.length;
       setStatus("read-status", n ? n + " answer" + (n === 1 ? "" : "s") + " proposed. Please confirm them below." : "The AI found nothing it could quote. Please answer by hand.");
+      renderNotices(Logic.extractionNotices(extraction));
       renderAnswers();
     }).catch(function (error) {
+      renderNotices([]);
       state.extraction = null;
       state.answers = Logic.defaults(state.questions);
-      var message = error.status === 503 ? "The AI step is not configured on this server. You can still answer by hand." : "The AI step failed: " + error.message + ". You can still answer by hand.";
+      var message = error.status === 503 ? "The AI step is not configured on this server. You can still answer by hand." : "The AI step failed: " + error.message.replace(/\.$/, "") + ". You can still answer by hand.";
       setStatus("read-status", message, true);
       renderAnswers();
     }).then(function () { button.disabled = false; });

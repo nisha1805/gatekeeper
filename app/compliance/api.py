@@ -12,6 +12,8 @@ from typing import Literal
 import hashlib
 from pathlib import Path
 
+import os
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -26,6 +28,7 @@ from classifier import (
     classify,
 )
 from explainer import explain
+from guards import RateLimiter, looks_like_instructions, mask_personal_data
 from extractor import ExtractionError, LLMError, extract, make_llm
 from questions import ANNEX_AREA_LABELS, QUESTIONS, ROLE_VALUES
 from store import make_store
@@ -36,6 +39,22 @@ store = make_store()
 llm = make_llm()
 
 WEB_DIR = Path(__file__).parent / "web"
+
+# The two endpoints that call the paid AI are limited per client and overall.
+limiter = RateLimiter(
+    per_client=int(os.environ.get("AI_RATE_LIMIT_PER_MINUTE", "10")),
+    overall=int(os.environ.get("AI_GLOBAL_RATE_LIMIT_PER_MINUTE", "30")),
+)
+
+
+def _limit(request: Request) -> None:
+    wait = limiter.check(request.client.host if request.client else "unknown")
+    if wait is not None:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many AI requests. Please wait a moment and try again.",
+            headers={"Retry-After": str(int(wait) + 1)},
+        )
 
 # The pages load only their own scripts and styles. Nothing is inlined, so a script
 # injected through a description would not run even if it got into the page.
@@ -183,12 +202,14 @@ def add_review(assessment_id: str, review: ReviewRequest) -> dict:
 
 
 @app.post("/assessments/{assessment_id}/explanation")
-def explain_assessment(assessment_id: str) -> dict:
+def explain_assessment(assessment_id: str, request: Request) -> dict:
     """A plain-language explanation of a stored assessment. The AI may only use the
     articles the rules cited; if it fails or breaks that rule, a fixed template is used."""
     record = store.get(assessment_id)
     if record is None:
         raise HTTPException(status_code=404, detail="assessment not found")
+    if llm is not None:
+        _limit(request)
     return explain(record["assessment"], llm)
 
 
@@ -208,16 +229,22 @@ def list_questions() -> dict:
 
 
 @app.post("/extractions")
-def create_extraction(request: ExtractionRequest) -> dict:
+def create_extraction(request: ExtractionRequest, http: Request) -> dict:
     """Propose answers from a description. The proposals are not classifications:
     a person confirms them, and the written rules decide the tier."""
     if llm is None:
         raise HTTPException(status_code=503, detail="the AI step is not configured")
+    _limit(http)
+    # The AI only ever sees the masked text, and the quotes are checked against it.
+    masked, counts = mask_personal_data(request.description)
+    suspicious = looks_like_instructions(masked)
     try:
-        result = extract(request.description, llm)
+        result = extract(masked, llm, suspicious=suspicious)
     except (LLMError, ExtractionError) as error:
         raise HTTPException(status_code=502, detail=str(error)) from error
-    digest = hashlib.sha256(request.description.encode("utf-8")).hexdigest()
+    result["personal_data_masked"] = counts
+    result["instruction_like_text"] = suspicious
+    digest = hashlib.sha256(masked.encode("utf-8")).hexdigest()
     stored = store.add_extraction(result, digest)
     return {**result, "extraction_id": stored["id"]}
 

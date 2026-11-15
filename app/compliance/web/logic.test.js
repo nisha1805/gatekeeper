@@ -139,3 +139,15 @@ test("agreement text", () => {
   assert.match(L.agreementText({ ai_used: true, proposed: 3, accepted_unchanged: 2, changed: 1, added_by_person: ["x"] }),
     /proposed 3 answers: 2 kept unchanged, 1 changed\. The person added 1 more/);
 });
+
+test("notices tell what was masked and flag instruction-like text", () => {
+  assert.deepStrictEqual(L.extractionNotices({ personal_data_masked: {}, instruction_like_text: false }), []);
+  const n = L.extractionNotices({ personal_data_masked: { email: 2, phone: 1 }, instruction_like_text: true });
+  assert.strictEqual(n.length, 2);
+  assert.match(n[0], /3 personal data items \(2 e-mail addresses, 1 phone number\) masked/);
+  assert.match(n[1], /looks like instructions/);
+});
+
+test("notices work for an old extraction without the new fields", () => {
+  assert.deepStrictEqual(L.extractionNotices({}), []);
+});
