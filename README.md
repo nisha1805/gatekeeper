@@ -41,6 +41,7 @@ When several teams add AI features, three things get out of control: cost (nobod
 - Results and reviews go into an append-only Postgres audit log. The application's database user can only read and add rows, triggers block changes for everyone else, and tests prove the refusals, in CI as well. A database administrator could still switch triggers off.
 - The reviewer name is typed, not authenticated. There is no login.
 - A real web page, served by the API at `/app/`, walks through describe, AI-proposed answers, confirmation, result with cited articles and explanation, and a human review that is saved in the audit log. A second page, the audit trail, lists every assessment with its result, cited articles, review and whether the AI was used, with filters, export to JSON and CSV (formula-safe), and the share of AI answers people kept unchanged. The pages use no framework and no inline scripts, and the server sets a strict Content-Security-Policy.
+- The compliance service runs in the cluster, deployed by Argo CD from a Helm chart: its own Postgres, a Job that creates the tables and the restricted database role, and the service as a non-root container with a read-only filesystem. CI builds the image, checks that it runs as non-root and answers, and pushes it to GHCR tagged with the commit. The service calls the in-cluster gateway with its own team key. In the cluster I checked that the application's database user is refused when it tries to update or delete audit rows.
 - A two-page Streamlit interface (copilot and audit trail) also calls the API. It is a test harness.
 - The AI step is described below.
 
@@ -105,6 +106,8 @@ The first run takes 5 to 10 minutes. Then, with `kubectl -n gateway port-forward
 ./scripts/seed-teams.sh
 ./scripts/smoke-test.sh
 ```
+
+Then the compliance service: `./scripts/create-compliance-secrets.sh` creates its secret (random database passwords, plus the `compliance-service` key from `.env.teams`), Argo CD deploys it, and `kubectl -n compliance port-forward svc/compliance 8002:8000` serves it at `http://localhost:8002/`.
 
 Tested on an Apple-silicon Mac with 8 GB of memory only. On a machine that size, close other heavy apps while the cluster runs.
 
