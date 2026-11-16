@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: compliance
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/nisha1805/gatekeeper.git
+    targetRevision: main
+    path: deploy/charts/compliance
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: compliance
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

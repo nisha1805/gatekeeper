@@ -49,6 +49,7 @@ jobs:
           persist-credentials: false
       - run: helm version
       - run: helm lint deploy/charts/hello
+      - run: helm lint deploy/charts/compliance
       - run: helm lint deploy/bootstrap
 
   compliance-tests:
