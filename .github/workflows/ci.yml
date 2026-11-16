@@ -99,4 +99,46 @@ jobs:
       - name: Run the web page logic tests
         working-directory: app/compliance/web
         run: node --test
-  
+
+  compliance-image:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/nisha1805/gatekeeper-compliance
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the image
+        run: docker build -t "$IMAGE:ci" app/compliance
+      - name: Check that it runs as a non-root user
+        run: |
+          set -eu
+          uid=$(docker run --rm --entrypoint id "$IMAGE:ci" -u)
+          echo "uid=$uid"
+          test "$uid" != "0"
+      - name: Start it and check that it answers
+        run: |
+          set -eu
+          docker run -d --name compliance -p 8000:8000 "$IMAGE:ci"
+          for i in $(seq 1 20); do
+            if curl -sf http://localhost:8000/health; then echo; break; fi
+            sleep 1
+          done
+          curl -sf http://localhost:8000/health > /dev/null
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/app/)" = "200"
+          docker logs compliance
+          docker rm -f compliance
+      - name: Push to GHCR (main only, tagged with the commit)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          TAG="sha-${GITHUB_SHA::12}"
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker tag "$IMAGE:ci" "$IMAGE:$TAG"
+          docker push "$IMAGE:$TAG"
+          echo "Pushed $IMAGE:$TAG"

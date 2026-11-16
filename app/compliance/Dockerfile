@@ -9,6 +9,8 @@ COPY requirements-runtime.txt .
 RUN pip install --no-cache-dir -r requirements-runtime.txt
 
 COPY . .
+# Files copied from a folder with owner-only permissions would be unreadable for the non-root user.
+RUN chmod -R a+rX /srv/compliance
 
 # Numeric non-root user, so Kubernetes (and the Kyverno policy) can verify it.
 USER 10001:10001
