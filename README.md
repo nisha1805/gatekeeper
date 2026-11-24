@@ -5,6 +5,16 @@ An AI gateway with EU AI Act compliance workflows, built as a hands-on portfolio
 
 **Status: work in progress. Prototype only, no real users.** Nothing here is production-ready.
 
+## See it in 1 minute
+
+**[Watch the 43-second demo (mp4, no sound)](docs/gatekeeper-demo.mp4)**: describe an invented AI system, the AI proposes answers with quotes, a person confirms, written rules decide the risk tier, and the result cites the article text. Every classification lands in an append-only audit trail.
+
+![AI proposals with quotes and the opened Sources](docs/images/proposals-and-sources.png)
+
+![Audit trail with an opened entry](docs/images/audit-trail.png)
+
+There is no public live demo yet. To run it yourself, see [Quick start](#quick-start).
+
 ## The problem
 
 When several teams add AI features, three things get out of control: cost (nobody knows what an answer costs), quality (prompts and models change without measurement) and compliance (EU AI Act duties need classification and evidence). See [the problem brief](docs/product/problem-brief.md).
