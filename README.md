@@ -97,7 +97,7 @@ Where AI is used, what it is allowed to decide, and what is not built yet.
 
 ## What is not built yet
 
-Planned: a quality gate for the AI step in CI, Langfuse traces, a login with review roles, a public live demo, and user interviews. Each is listed above only once it works.
+Planned: a quality gate for the AI step in CI, Langfuse traces, a login with review roles, a public live demo, and talking to real users (none so far). Each is listed above only once it works.
 
 ## Quick start
 

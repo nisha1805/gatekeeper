@@ -18,7 +18,7 @@ Gatekeeper is my answer to all three, in one small system. The longer version is
 
 A product owner or compliance lead in a company with several AI features, who has to answer "which of our AI systems are high-risk, who checked, and on what basis?" and has no tool for it. The platform side is for the engineers who run those features.
 
-I have not interviewed any users yet. Three interviews are planned, and I will add what I learn here.
+I have not interviewed any users. This is the biggest gap in the product side of the project, and I say so rather than pretend otherwise.
 
 ## What I built
 
@@ -71,7 +71,7 @@ I only list things I ran myself.
 
 ## What I would do next
 
-1. Interview three people who handle AI compliance, and change the questionnaire based on what they say.
+1. Talk to people who handle AI compliance, and change the questionnaire based on what they say.
 2. Add a quality gate: score the AI's proposals against the 21 cases and block a release if they get worse.
 3. Add a real login and review roles.
 4. Show a public demo, once I find a free and safe way to host it.
