@@ -50,7 +50,7 @@ When several teams add AI features, three things get out of control: cost (nobod
 ![Gateway dashboard](docs/images/dashboard.png)
 
 **Compliance module (prototype)**
-- The EU AI Act classifier is a set of written rules, not a model. Each result names the articles it used, and 15 tests pin the rules down. It follows the amended Act as I read it on a reference site, and it is not yet checked line by line against EUR-Lex.
+- The EU AI Act classifier is a set of written rules, not a model. Each result names the articles it used, and 15 tests pin the rules down. On 24 November 2026 I compared the wording of every rule by hand with the EUR-Lex text. Exceptions are simplified and application dates are not checked.
 - A web API classifies a described system, stores every result, and records a reviewer's approve or reject decision. Misspelled fields are rejected instead of ignored.
 - Results and reviews go into an append-only Postgres audit log. The application's database user can only read and add rows, triggers block changes for everyone else, and tests prove the refusals, in CI as well. A database administrator could still switch triggers off.
 - The reviewer name is typed, not authenticated. There is no login.
@@ -143,7 +143,7 @@ Tools I use, and what for. Licences will be checked and listed here before the p
 - gitleaks: scans commits and the full history for secrets
 - GitHub Actions: CI. The only third-party action used is GitHub's own checkout, pinned to a commit
 - Docker: runs the local cluster and a throwaway Postgres
-- The law: Regulation (EU) 2024/1689 as amended by Regulation (EU) 2026/1744. I read the text on a third-party reference site and have not yet checked it line by line on EUR-Lex.
+- The law: Regulation (EU) 2024/1689 as amended by Regulation (EU) 2026/1744. The article texts shown under Sources are copied from EUR-Lex, and I compared each rule's wording with them by hand on 24 November 2026. Only the Official Journal text is authentic, and I am not a lawyer.
 - Other open-source projects also classify AI systems under the EU AI Act. I looked only at their READMEs and copied no code.
 
 ## Honesty notes

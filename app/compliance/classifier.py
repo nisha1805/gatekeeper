@@ -1,20 +1,22 @@
 """EU AI Act risk classification as plain, testable rules.
 
 Decision support only, not legal advice. The rules follow Regulation (EU) 2024/1689
-as amended by Regulation (EU) 2026/1744. The law was read on a third-party reference
-site and has not yet been checked line by line against EUR-Lex.
+as amended by Regulation (EU) 2026/1744. On 24 November 2026 the wording of every rule
+was compared by hand with the EUR-Lex copy in data/ai_act.json (Art. 5(1), 6, 50 and
+Annex III). Exceptions are simplified and application dates are not checked.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
 
-RULES_VERSION = "0.1.0"
+RULES_VERSION = "0.1.1"
 DISCLAIMER = "Decision support only, not legal advice."
 SOURCE_NOTE = (
     "Rules follow Regulation (EU) 2024/1689 as amended by Regulation (EU) 2026/1744. "
-    "The text was read on a third-party reference site and is not yet checked "
-    "line by line against EUR-Lex."
+    "On 24 November 2026 the wording of each rule was compared by hand with the EUR-Lex "
+    "text (Art. 5(1), 6, 50, Annex III). Exceptions are simplified and application dates "
+    "are not checked. Only the Official Journal text is authentic."
 )
 
 
@@ -177,8 +179,9 @@ def _prohibited(system: SystemDescription) -> tuple[list[Reason], list[str]]:
             ))
     if any(r.article in ("Art. 5(1)(ba)", "Art. 5(1)(bb)") for r in reasons):
         notes.append(
-            "The bans in Art. 5(1)(ba) and (bb) were added in 2026. One source says they apply "
-            "from 2 December 2026. Verify the date in Art. 113 on EUR-Lex."
+            "The bans in Art. 5(1)(ba) and (bb) were added by Regulation (EU) 2026/1744. Per the "
+            "EUR-Lex text they apply from 2 December 2026, under conditions in Art. 5(1a) and "
+            "(1b) of the amending text. This tool does not model those conditions."
         )
     if any(r.article == "Art. 5(1)(h)" for r in reasons):
         notes.append(
