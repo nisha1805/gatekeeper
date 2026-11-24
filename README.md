@@ -7,6 +7,10 @@ An AI gateway with EU AI Act compliance workflows, built as a hands-on portfolio
 
 ## See it in 1 minute
 
+
+https://github.com/user-attachments/assets/7bb69343-62dc-4cfb-98e9-61ee73ee5166
+
+
 **[Watch the 43-second demo (mp4, no sound)](docs/gatekeeper-demo.mp4)**: describe an invented AI system, the AI proposes answers with quotes, a person confirms, written rules decide the risk tier, and the result cites the article text. Every classification lands in an append-only audit trail.
 
 ![AI proposals with quotes and the opened Sources](docs/images/proposals-and-sources.png)
