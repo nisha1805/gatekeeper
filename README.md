@@ -127,7 +127,7 @@ Tested on an Apple-silicon Mac with 8 GB of memory only. On a machine that size,
 
 ## Inspired by and built on
 
-Tools I use, and what for. Licences will be checked and listed here before the project is published.
+Tools I use, and what for. Licences, and what I checked, are in [docs/third-party-licences.md](docs/third-party-licences.md). This project is not related to the Open Policy Agent "Gatekeeper" for Kubernetes.
 
 - LiteLLM: the gateway (keys, budgets, routing, fallback). I configure and test it. I did not write it.
 - Anthropic Claude models (Haiku and Sonnet), through the API: the gateway's models and the AI step
@@ -143,7 +143,7 @@ Tools I use, and what for. Licences will be checked and listed here before the p
 - gitleaks: scans commits and the full history for secrets
 - GitHub Actions: CI. The only third-party action used is GitHub's own checkout, pinned to a commit
 - Docker: runs the local cluster and a throwaway Postgres
-- The law: Regulation (EU) 2024/1689 as amended by Regulation (EU) 2026/1744. The article texts shown under Sources are copied from EUR-Lex, and I compared each rule's wording with them by hand on 24 November 2026. Only the Official Journal text is authentic, and I am not a lawyer.
+- The law: Regulation (EU) 2024/1689 as amended by Regulation (EU) 2026/1744, source EUR-Lex (https://eur-lex.europa.eu), reused with credit under the Commission's CC BY 4.0 reuse terms. Changes: split into single provisions, formatting removed, added text marked. The article texts shown under Sources are copied from EUR-Lex, and I compared each rule's wording with them by hand on 24 November 2026. Only the Official Journal text is authentic, and I am not a lawyer.
 - Other open-source projects also classify AI systems under the EU AI Act. I looked only at their READMEs and copied no code.
 
 ## Honesty notes
