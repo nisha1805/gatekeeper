@@ -290,6 +290,9 @@
   // ---- start ----------------------------------------------------------------
 
   function init() {
+    fetch("/config").then(function (r) { return r.ok ? r.json() : { demo: false }; }).then(function (c) {
+      if (c.demo) { var b = document.getElementById("demo-banner"); b.textContent = Logic.demoNotice; b.hidden = false; }
+    }).catch(function () {});
     var chips = $("samples");
     SAMPLES.forEach(function (sample) {
       var chip = el("button", { type: "button", class: "chip", "aria-pressed": "false", text: sample.label });

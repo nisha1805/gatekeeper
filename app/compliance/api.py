@@ -146,6 +146,12 @@ def health() -> dict:
     return {"status": "ok", "rules_version": RULES_VERSION}
 
 
+@app.get("/config")
+def config() -> dict:
+    """Settings the pages need. demo: a public demo, so the pages show a notice."""
+    return {"demo": os.environ.get("DEMO_MODE") == "1"}
+
+
 @app.post("/assessments", status_code=201)
 def create_assessment(request: AssessmentRequest, extraction_id: str | None = None) -> dict:
     """extraction_id (query parameter, optional): the AI proposals this assessment started

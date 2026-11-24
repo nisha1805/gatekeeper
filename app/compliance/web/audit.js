@@ -123,6 +123,9 @@
   }
 
   function init() {
+    fetch("/config").then(function (r) { return r.ok ? r.json() : { demo: false }; }).then(function (c) {
+      if (c.demo) { var b = document.getElementById("demo-banner"); b.textContent = Logic.demoNotice; b.hidden = false; }
+    }).catch(function () {});
     ["f-tier", "f-review"].forEach(function (id) { $(id).addEventListener("change", renderRows); });
     $("f-search").addEventListener("input", renderRows);
     $("export-json").addEventListener("click", function () {

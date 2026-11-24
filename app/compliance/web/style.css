@@ -115,3 +115,7 @@ button.link { font: inherit; background: none; border: 0; color: var(--accent); 
 .legal-text, .legal-context { white-space: pre-wrap; font-size: 14px; margin: 6px 0; }
 .legal-context { color: var(--muted); }
 .legal-text.added { border-left: 3px solid var(--accent); padding-left: 10px; }
+
+/* demo notice */
+.demo-banner { background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; font-size: 14px; font-weight: 600; }
+.demo-banner[hidden] { display: none; }

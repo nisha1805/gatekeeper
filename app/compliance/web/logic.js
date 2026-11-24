@@ -192,6 +192,8 @@
     return "";
   }
 
+  var DEMO_NOTICE = "Public demo of a prototype. Please use only invented or public information, never real or personal data. Nothing is saved after a restart. Decision support, not legal advice.";
+
   function sourceLine(meta) {
     return "Copied on " + meta.retrieved + " from Regulation (EU) 2024/1689 and its amendment, Regulation (EU) 2026/1744, on EUR-Lex. " +
       meta.not_official;
@@ -200,7 +202,7 @@
   var api = { defaults: defaults, initialAnswers: initialAnswers, splitQuestions: splitQuestions,
     groupQuestions: groupQuestions, buildPayload: buildPayload, tierInfo: tierInfo,
     confidenceText: confidenceText, valueText: valueText, extractionNotices: extractionNotices,
-    provisionStatus: provisionStatus, sourceLine: sourceLine,
+    provisionStatus: provisionStatus, sourceLine: sourceLine, demoNotice: DEMO_NOTICE,
     formatTime: formatTime, citedArticles: citedArticles, toRows: toRows, filterRows: filterRows,
     stats: stats, csvCell: csvCell, toCsv: toCsv, agreementText: agreementText };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

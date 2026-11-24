@@ -164,3 +164,8 @@ test("the source line names the date and the legal caveat", () => {
   assert.match(line, /EUR-Lex/);
   assert.match(line, /authentic/);
 });
+
+test("the demo notice warns against real data and says nothing is saved", () => {
+  assert.match(L.demoNotice, /never real or personal data/);
+  assert.match(L.demoNotice, /Nothing is saved/);
+});
