@@ -149,6 +149,7 @@ Tools I use, and what for. Licences, and what I checked, are in [docs/third-part
 ## Honesty notes
 
 - Public and synthetic data only. Nothing from any employer.
+- I built this with Claude as a coding assistant, which is why commits carry a co-author line. I chose the design, ran and checked everything, and I can explain every part.
 - This is decision support, not legal advice.
 - I will only claim what I have built, and only report numbers I can reproduce.
 

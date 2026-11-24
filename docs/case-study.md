@@ -1,6 +1,6 @@
 # Case study: Gatekeeper
 
-*A prototype I built alone to show how I run AI features safely: platform first, AI second, product third. Public and synthetic data only. Not legal advice.*
+*A prototype I built, using Claude as a coding assistant, to show how I run AI features safely: platform first, AI second, product third. Public and synthetic data only. Not legal advice.*
 
 ![AI proposals with quotes and the opened Sources](images/proposals-and-sources.png)
 
