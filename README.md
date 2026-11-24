@@ -21,7 +21,7 @@ There is no public live demo yet. To run it yourself, see [Quick start](#quick-s
 
 ## The problem
 
-When several teams add AI features, three things get out of control: cost (nobody knows what an answer costs), quality (prompts and models change without measurement) and compliance (EU AI Act duties need classification and evidence). See [the problem brief](docs/product/problem-brief.md).
+When several teams add AI features, three things get out of control: cost (nobody knows what an answer costs), quality (prompts and models change without measurement) and compliance (EU AI Act duties need classification and evidence). See [the problem brief](docs/product/problem-brief.md) and [the case study](docs/case-study.md).
 
 ## What works today
 
@@ -71,7 +71,7 @@ Where AI is used, what it is allowed to decide, and what is not built yet.
 | Outage drills | I broke the primary model on purpose and checked that the backup answered and that an alert fired and cleared | Done, evidence in the logbook |
 | AI monitoring | Requests per model, failures, backup use, a written 99% target and three alerts, in Prometheus and Grafana | Built |
 | Answer proposals from free text | `POST /extractions` sends a description through the gateway, and the model proposes answers to the questionnaire, each with a quote from the description | Built, checked on a real model |
-| AI-written explanation using only the cited articles | `POST /assessments/{id}/explanation`: the model explains the result, and the code rejects any mention of an article, paragraph or annex point the rules did not cite, or any year. A fixed template is used if the AI fails or is rejected | Built, tested with a fake model, not yet run on a real one |
+| AI-written explanation using only the cited articles | `POST /assessments/{id}/explanation`: the model explains the result, and the code rejects any mention of an article, paragraph or annex point the rules did not cite, or any year. A fixed template is used if the AI fails or is rejected | Built. Tested with a fake model and run on a real one (Claude Haiku through the gateway). The checker can be stricter than needed for minimal-risk systems, and then the template is shown |
 | AI proposals stored next to the final answers | `POST /extractions` saves the proposals (not the description, only its hash) in an append-only table. `GET /assessments/{id}/ai-agreement` and `GET /ai-agreement` show how often people kept the AI's answers unchanged | Built and tested, including on Postgres |
 | Exact article text under "Sources" | `GET /assessments/{id}/sources` returns the exact wording of every article the rules cited, copied by a script from EUR-Lex (Regulation 2024/1689 and its amendment 2026/1744) with a SHA-256 fingerprint per text. No AI is involved, and the result page shows it under each result | Built and tested. It is a convenience copy: only the Official Journal text is authentic. Paragraphs are copied only for the cited provisions, and the copy is not refreshed automatically |
 | Vector search over the whole AI Act | Retrieval for free-text questions about the Act | Not built, on purpose: the cited articles come from an exact lookup, the text set is small (26 provisions), and free-text legal questions drift towards legal advice. A candidate for a separate project |
@@ -97,7 +97,7 @@ Where AI is used, what it is allowed to decide, and what is not built yet.
 
 ## What is not built yet
 
-The compliance service and its interface run locally and are not yet deployed through Argo CD. Also planned: exact article text under the results, a quality gate for the AI step in CI, Langfuse traces, and the product documents (case study and user interviews). Each is listed above only once it works.
+Planned: a quality gate for the AI step in CI, Langfuse traces, a login with review roles, a public live demo, and user interviews. Each is listed above only once it works.
 
 ## Quick start
 
