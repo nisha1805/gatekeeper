@@ -75,6 +75,11 @@ async def add_page_headers(request: Request, call_next):
     if request.url.path.startswith("/app"):
         for name, value in PAGE_SECURITY_HEADERS.items():
             response.headers[name] = value
+        if os.environ.get("DEMO_MODE") == "1":
+            # The public demo is shown inside the Hugging Face Space page.
+            response.headers["Content-Security-Policy"] = PAGE_SECURITY_HEADERS[
+                "Content-Security-Policy"
+            ].replace("frame-ancestors 'none'", "frame-ancestors https://huggingface.co https://*.huggingface.co")
     return response
 
 
